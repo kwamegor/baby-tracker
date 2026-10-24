@@ -674,8 +674,6 @@
     <!-- JavaScript Base Functions -->
     <script>
         const CORRECT_PASSCODE = "2026";
-        // 🔑 請在此處填入你在 Google AI Studio 申請的 Gemini API Key
-        const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
 
         function unlockApp() {
             document.getElementById('authOverlay').classList.add('hidden');
@@ -923,40 +921,10 @@
             resultBox.classList.remove('hidden');
         };
 
+        // 🌟 使用免 API Key 嘅 MyMemory 翻譯 API，直接開箱即用！
         window.translateText = async function() {
-    const input = document.getElementById('transInput').value.trim();
-    if (!input) return;
-
-    const btn = document.getElementById('translateBtn');
-    const resultBox = document.getElementById('transOutputBox');
-    const resultEl = document.getElementById('transResult');
-
-    btn.disabled = true;
-    btn.classList.add('opacity-75');
-    resultBox.classList.remove('hidden');
-    resultEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i> 翻譯中... / Menerjemahkan...';
-
-    // 判斷語言方向：印 ➔ 中 定係 中 ➔ 印
-    // MyMemory 代碼：印尼文係 'id'，繁體中文係 'zh-TW'
-    const langPair = isIndoToChinese ? 'id|zh-TW' : 'zh-TW|id';
-    const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=${langPair}`;
-
-    try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
-        if (data && data.responseData && data.responseData.translatedText) {
-            resultEl.innerText = data.responseData.translatedText.trim();
-        } else {
-            resultEl.innerText = '翻譯失敗，請重試 / Gagal menerjemahkan.';
-        }
-    } catch (err) {
-        resultEl.innerText = '連線失敗或回應超時 / Error koneksi';
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-75');
-    }
-};
+            const input = document.getElementById('transInput').value.trim();
+            if (!input) return;
 
             const btn = document.getElementById('translateBtn');
             const resultBox = document.getElementById('transOutputBox');
@@ -965,29 +933,17 @@
             btn.disabled = true;
             btn.classList.add('opacity-75');
             resultBox.classList.remove('hidden');
-            resultEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i> AI 翻譯中... / Menerjemahkan...';
+            resultEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i> 翻譯中... / Menerjemahkan...';
 
-            const systemPrompt = isIndoToChinese 
-                ? "You are an expert bilingual translator for Hong Kong households. Translate the input naturally into Traditional Chinese. Output ONLY the translated text."
-                : "You are an expert bilingual translator for Hong Kong households. Translate the input naturally into Indonesian. Output ONLY the translated text.";
-
-            const payload = {
-                contents: [{ parts: [{ text: input }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] }
-            };
-
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            const langPair = isIndoToChinese ? 'id|zh-TW' : 'zh-TW|id';
+            const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=${langPair}`;
 
             try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                const response = await fetch(apiUrl);
                 const data = await response.json();
-                const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (translatedText) {
-                    resultEl.innerText = translatedText.trim();
+                
+                if (data && data.responseData && data.responseData.translatedText) {
+                    resultEl.innerText = data.responseData.translatedText.trim();
                 } else {
                     resultEl.innerText = '翻譯失敗，請重試 / Gagal menerjemahkan.';
                 }
@@ -1048,7 +1004,6 @@
             const bothSection = document.getElementById('bothAmountSection');
             const colorSection = document.getElementById('poopColorSection');
 
-            // 切換單一份量與分項份量
             if (isBoth) {
                 singleSection.classList.add('hidden');
                 bothSection.classList.remove('hidden');
@@ -1057,7 +1012,6 @@
                 bothSection.classList.add('hidden');
             }
 
-            // 大便或兩樣都有時，顯示顏色選擇
             if (isBoth || isPoopOnly) {
                 colorSection.classList.remove('hidden');
             } else {
@@ -1108,7 +1062,6 @@
                 amountDetails = `份量: ${singleAmt}`;
             }
 
-            // 抓取顏色資訊
             let colorDetail = '';
             if (isBoth || isPoopOnly) {
                 const selectedColor = document.querySelector('input[name="poopColor"]:checked')?.value || '黃色 (Kuning)';
