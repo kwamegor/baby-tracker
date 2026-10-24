@@ -675,10 +675,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getDatabase, ref, push, remove, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        const firebaseConfig = {
+const firebaseConfig = {
             apiKey: "AIzaSyAfGu86QjIRvtCwI86c6fEBk-y2vjIy2mw",
             authDomain: "baby-tracker-199b2.firebaseapp.com",
-            databaseURL: "https://baby-tracker-199b2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            databaseURL: "https://baby-tracker-199b2-default-rtdb.firebaseio.com", // ⬅️ 修改這裡！移除原本的 asia-southeast1 後綴
             projectId: "baby-tracker-199b2",
             storageBucket: "baby-tracker-199b2.firebasestorage.app",
             messagingSenderId: "1042532845387",
