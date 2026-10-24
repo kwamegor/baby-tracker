@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>嬰兒照顧日誌 | Jurnal Perawatan Bayi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- html2canvas for Image Exporting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-bubble {
+            font-family: 'Fredoka', cursive, 'Noto Sans TC', sans-serif;
+        }
+        .btn-active:active {
+            transform: scale(0.96);
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-amber-50/50 min-h-screen pb-20 text-slate-800">
+
+    <!-- PASSWORD LOCK OVERLAY (密碼驗證頁面) -->
+    <div id="authOverlay" class="fixed inset-0 z-50 bg-gradient-to-br from-amber-400 via-rose-400 to-amber-500 flex items-center justify-center p-4">
+        <div id="authCard" class="bg-white/95 backdrop-blur-md w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center space-y-5 border border-white/40">
+            <div class="space-y-2">
+                <div class="w-16 h-16 bg-amber-100 text-amber-500 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-inner">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h2 class="text-xl font-bold font-bubble text-slate-800">請輸入密碼</h2>
+                <p class="text-xs text-slate-500">Masukkan Kata Sandi untuk Masuk</p>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <input type="password" id="passcodeInput" maxlength="6" inputmode="numeric" placeholder="••••" required autofocus
+                           class="w-full text-center text-2xl tracking-[0.5em] font-bold py-3 bg-slate-100 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-amber-400 focus:bg-white outline-none transition">
+                </div>
+
+                <div id="authErrorMsg" class="hidden text-xs text-rose-500 font-bold bg-rose-50 py-1.5 px-3 rounded-xl border border-rose-100">
+                    密碼錯誤，請重試！<br><span class="font-normal text-[10px]">Kata sandi salah, coba lagi!</span>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-rose-400 text-white font-bold py-3 rounded-xl shadow-md hover:opacity-95 transition btn-active">
+                    進入系統 | Masuk
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTENT (主頁面內容) -->
+    <div id="mainApp" class="hidden">
+        <!-- Top Header -->
+        <header class="bg-gradient-to-r from-amber-400 to-rose-400 text-white p-4 sticky top-0 z-30 shadow-md rounded-b-2xl">
+            <div class="max-w-md mx-auto flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold font-bubble flex items-center gap-2">
+                        <i class="fa-solid fa-baby text-2xl"></i> Baby Tracker
+                    </h1>
+                    <p class="text-xs text-amber-100 font-medium flex items-center gap-1.5">
+                        <span>嬰兒照顧日誌</span>
+                        <span id="syncStatus" class="inline-flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full text-[10px]"><i class="fa-solid fa-cloud text-emerald-300"></i> 雲端同步中</span>
+                    </p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="lockApp()" title="鎖定頁面" class="text-xs bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 rounded-full font-medium transition">
+                        <i class="fa-solid fa-lock"></i>
+                    </button>
+                    <button onclick="confirmClearDayLogs()" class="text-xs bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-3 py-1.5 rounded-full font-medium transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i>清空 | Hapus
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Container -->
+        <main class="max-w-md mx-auto p-4 space-y-4">
+
+            <!-- TAB 1: Care Log Page (照顧日誌頁面) -->
+            <div id="pageCareLog" class="space-y-4">
+                <!-- Date Selector & Quick Summary -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="space-y-2 border-b pb-3 border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                <i class="fa-solid fa-calendar-day text-amber-500"></i> 日期 | Tanggal:
+                            </label>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="changeDate(-1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs transition btn-active">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <input type="date" id="logDate" onchange="renderLogs()" class="bg-slate-100 text-slate-800 text-xs font-bold px-2.5 py-1.5 rounded-xl border-0 focus:ring-2 focus:ring-amber-400">
+                                <button type="button" onclick="changeDate(1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs transition btn-active">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Date Selection Shortcuts -->
+                        <div class="flex gap-2 justify-end pt-1">
+                            <button type="button" onclick="setDateToOffset(-1)" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded-lg transition">昨日</button>
+                            <button type="button" onclick="setDateToOffset(0)" class="px-2.5 py-1 bg-amber-500 text-white text-xs font-semibold rounded-lg shadow-sm transition">今日</button>
+                            <button type="button" onclick="setDateToOffset(1)" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded-lg transition">明日</button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div class="bg-amber-50 border border-amber-200/60 rounded-xl p-3 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-amber-400/20 text-amber-600 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-bottle-droplet"></i>
+                            </div>
+                            <div>
+                                <span class="text-[11px] font-bold text-amber-800/80 block">總餵奶量 | Total Susu</span>
+                                <span id="totalMilk" class="text-lg font-black text-amber-700">0</span> <span class="text-xs font-bold text-amber-600">ml</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-sky-50 border border-sky-200/60 rounded-xl p-3 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-sky-400/20 text-sky-600 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-baby-carriage"></i>
+                            </div>
+                            <div>
+                                <span class="text-[11px] font-bold text-sky-800/80 block">換片次數 | Ganti Popok</span>
+                                <span id="totalDiaper" class="text-lg font-black text-sky-700">0</span> <span class="text-xs font-bold text-sky-600">次</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Action Buttons Grid -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="openModal('milkModal')" class="bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
+                        <i class="fa-solid fa-bottle-droplet text-3xl"></i>
+                        <div class="text-center">
+                            <span class="font-bold text-sm block">紀錄餵奶</span>
+                            <span class="text-[11px] font-normal opacity-90 block">Minum Susu</span>
+                        </div>
+                    </button>
+
+                    <button onclick="openModal('diaperModal')" class="bg-gradient-to-br from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
+                        <i class="fa-solid fa-baby-carriage text-3xl"></i>
+                        <div class="text-center">
+                            <span class="font-bold text-sm block">紀錄換片</span>
+                            <span class="text-[11px] font-normal opacity-90 block">Ganti Popok</span>
+                        </div>
+                    </button>
+
+                    <button onclick="openModal('sleepModal')" class="bg-gradient-to-br from-indigo-400 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
+                        <i class="fa-solid fa-moon text-3xl"></i>
+                        <div class="text-center">
+                            <span class="font-bold text-sm block">紀錄睡眠</span>
+                            <span class="text-[11px] font-normal opacity-90 block">Catat Tidur</span>
+                        </div>
+                    </button>
+
+                    <button onclick="openModal('otherModal')" class="bg-gradient-to-br from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
+                        <i class="fa-solid fa-notes-medical text-3xl"></i>
+                        <div class="text-center">
+                            <span class="font-bold text-sm block">其他紀錄</span>
+                            <span class="text-[11px] font-normal opacity-90 block">Lain-lain</span>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Summary Card Generate Button -->
+                <button onclick="generateSummary()" class="w-full bg-gradient-to-r from-rose-400 via-amber-400 to-amber-500 text-white font-bold py-3.5 px-4 rounded-2xl shadow-md hover:opacity-95 transition btn-active flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-file-invoice text-lg"></i>
+                    <span>產生每日總結圖卡 | Ringkasan Harian</span>
+                </button>
+
+                <!-- Timeline / Log List -->
+                <div class="space-y-3">
+                    <h2 class="font-bold text-slate-700 text-sm flex items-center gap-2 px-1">
+                        <i class="fa-solid fa-list-check text-amber-500"></i> 當日紀錄列表 | Catatan Hari Ini
+                    </h2>
+                    <div id="logList" class="space-y-2.5">
+                        <!-- Dynamic Log Items Rendered via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Instant Translator Page (即時翻譯頁面) -->
+            <div id="pageTranslator" class="hidden space-y-4">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex justify-between items-center bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-language text-indigo-600 text-xl"></i>
+                            <span id="transDirText" class="font-bold text-sm text-indigo-900">印 ➔ 中 (Indo ➔ 中文)</span>
+                        </div>
+                        <button onclick="toggleTranslationDirection()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow transition btn-active flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-rotate-left"></i> 切換 Direction
+                        </button>
+                    </div>
+
+                    <div>
+                        <label id="transInputLabel" class="block text-xs font-bold text-slate-600 mb-1">輸入印尼文 (可夾雜英文)：</label>
+                        <textarea id="transInput" rows="3" placeholder="Tulis teks di sini... ( boleh mix English / 中文 )" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:bg-white transition"></textarea>
+                    </div>
+
+                    <button id="translateBtn" onclick="translateText()" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-3 rounded-xl shadow-md hover:from-indigo-600 hover:to-purple-700 transition btn-active flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 即時翻譯 | Terjemahkan
+                    </button>
+
+                    <div id="transOutputBox" class="hidden bg-slate-900 text-white p-4 rounded-xl space-y-3 relative">
+                        <div class="text-xs text-amber-300 font-medium">翻譯結果 | Hasil Terjemahan:</div>
+                        <p id="transResult" class="text-base font-medium leading-relaxed"></p>
+
+                        <div class="pt-2 border-t border-slate-800">
+                            <button onclick="copyTranslation()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow transition btn-active">
+                                <i class="fa-regular fa-copy text-base"></i> 複製結果 | Salin Hasil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-regular fa-comments text-amber-500"></i> 常用育兒短語 | Frasa Umum
+                    </h3>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="useQuickPhrase('BB 已經飲完奶了。', 'Bayi sudah selesai minum susu.')" class="p-2.5 text-left bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 transition flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-700">BB 已經飲完奶了。</span>
+                            <span class="text-slate-400 font-normal italic">Bayi sudah selesai minum susu.</span>
+                        </button>
+                        <button onclick="useQuickPhrase('BB 換咗尿片，大便咗。', 'Bayi sudah ganti popok, ada pup.')" class="p-2.5 text-left bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 transition flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-700">BB 換咗尿片，大便咗。</span>
+                            <span class="text-slate-400 font-normal italic">Bayi sudah ganti popok, ada pup.</span>
+                        </button>
+                        <button onclick="useQuickPhrase('BB 剛剛睡著了。', 'Bayi baru saja tidur.')" class="p-2.5 text-left bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 transition flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-700">BB 剛剛睡著了。</span>
+                            <span class="text-slate-400 font-normal italic">Bayi baru saja tidur.</span>
+                        </button>
+                        <button onclick="useQuickPhrase('BB 體溫正常。', 'Suhu badan bayi normal.')" class="p-2.5 text-left bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 transition flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-700">BB 體溫正常。</span>
+                            <span class="text-slate-400 font-normal italic">Suhu badan bayi normal.</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 shadow-lg">
+            <div class="max-w-md mx-auto flex justify-around items-center h-16">
+                <button id="navBtnCare" onclick="switchTab('care')" class="flex-1 flex flex-col items-center justify-center h-full text-amber-600 font-bold transition">
+                    <i class="fa-solid fa-baby-carriage text-lg"></i>
+                    <span class="text-[11px] mt-0.5 leading-tight">照顧日誌</span>
+                    <span class="text-[9px] font-normal opacity-80 leading-none">Catatan</span>
+                </button>
+                <div class="w-px h-8 bg-slate-200"></div>
+                <button id="navBtnTrans" onclick="switchTab('trans')" class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition">
+                    <i class="fa-solid fa-language text-lg"></i>
+                    <span class="text-[11px] mt-0.5 leading-tight">即時翻譯</span>
+                    <span class="text-[9px] font-normal opacity-80 leading-none">Penerjemah</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Custom Modal for Notifications / Alerts -->
+    <div id="messageModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-2xl p-5 space-y-3 text-center shadow-xl">
+            <div id="msgModalIcon" class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-2xl mx-auto">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <h3 id="msgModalTitle" class="font-bold text-slate-800 text-base">提示 | Perhatian</h3>
+            <p id="msgModalText" class="text-xs text-slate-600 leading-relaxed"></p>
+            <button onclick="closeModal('messageModal')" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs transition btn-active">
+                確定 | OK
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Confirmations -->
+    <div id="confirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-2xl p-5 space-y-4 text-center shadow-xl">
+            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-2xl mx-auto">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirmTitle" class="font-bold text-slate-800 text-base">確認操作 | Konfirmasi</h3>
+            <p id="confirmText" class="text-xs text-slate-600 leading-relaxed"></p>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button onclick="closeModal('confirmModal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition">
+                    取消 | Batal
+                </button>
+                <button id="confirmYesBtn" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 rounded-xl text-xs transition btn-active">
+                    確定 | Ya
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Milk Feeding -->
+    <div id="milkModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-slide-up">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-amber-800 flex items-center gap-2">
+                    <i class="fa-solid fa-bottle-droplet text-amber-500"></i>
+                    紀錄餵奶 | Catat Minum Susu
+                </h3>
+                <button onclick="closeModal('milkModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+            </div>
+
+            <form onsubmit="saveMilkLog(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">時間 | Waktu</label>
+                    <input type="time" id="milkTime" required class="w-full p-3 bg-slate-100 rounded-xl font-semibold border-0 focus:ring-2 focus:ring-amber-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">奶種 | Jenis Susu</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="milkType" value="奶粉 (Susu Formula)" checked class="peer hidden">
+                            <div class="p-2.5 text-center text-xs font-bold rounded-xl border border-slate-200 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 transition">
+                                奶粉<br><span class="text-[10px] font-normal opacity-80">Formula</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="milkType" value="樽餵母乳 (ASI Botol)" class="peer hidden">
+                            <div class="p-2.5 text-center text-xs font-bold rounded-xl border border-slate-200 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 transition">
+                                樽餵母乳<br><span class="text-[10px] font-normal opacity-80">ASI Botol</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs font-bold text-slate-600">份量 | Jumlah (ml)</label>
+                        <span id="amountDisplay" class="text-base font-bold text-amber-600">120 ml</span>
+                    </div>
+                    <input type="range" id="milkAmount" min="10" max="300" step="5" value="120" oninput="document.getElementById('amountDisplay').innerText = this.value + ' ml'" class="w-full accent-amber-500 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex flex-wrap justify-between gap-1 mt-2">
+                        <button type="button" onclick="setMilkAmount(30)" class="flex-1 min-w-[38px] py-1 bg-amber-50 text-amber-700 text-xs rounded-lg font-medium border border-amber-200">30ml</button>
+                        <button type="button" onclick="setMilkAmount(60)" class="flex-1 min-w-[38px] py-1 bg-amber-50 text-amber-700 text-xs rounded-lg font-medium border border-amber-200">60ml</button>
+                        <button type="button" onclick="setMilkAmount(90)" class="flex-1 min-w-[38px] py-1 bg-amber-50 text-amber-700 text-xs rounded-lg font-medium border border-amber-200">90ml</button>
+                        <button type="button" onclick="setMilkAmount(120)" class="flex-1 min-w-[38px] py-1 bg-amber-50 text-amber-700 text-xs rounded-lg font-medium border border-amber-200">120ml</button>
+                        <button type="button" onclick="setMilkAmount(150)" class="flex-1 min-w-[38px] py-1 bg-amber-50 text-amber-700 text-xs rounded-lg font-medium border border-amber-200">150ml</button>
+                        <button type="button" onclick="setMilkAmount(180)" class="flex-1 min-w-[38px] py-1 bg-amber-50 text-amber-700 text-xs rounded-lg font-medium border border-amber-200">180ml</button>
+                        <button type="button" onclick="setMilkAmount(210)" class="flex-1 min-w-[38px] py-1 bg-amber-50 text-amber-700 text-xs rounded-lg font-medium border border-amber-200">210ml</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">備註 | Catatan (選填/opsional)</label>
+                    <input type="text" id="milkNote" placeholder="例如: 吐奶 / Minum sisa sedikit" class="w-full p-3 bg-slate-100 rounded-xl text-sm border-0 focus:ring-2 focus:ring-amber-400">
+                </div>
+
+                <button type="submit" class="w-full bg-amber-500 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-amber-600 transition btn-active">
+                    儲存 | Simpan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Diaper Change -->
+    <div id="diaperModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-sky-800 flex items-center gap-2">
+                    <i class="fa-solid fa-baby-carriage text-sky-500"></i>
+                    紀錄換片 | Catat Ganti Popok
+                </h3>
+                <button onclick="closeModal('diaperModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+            </div>
+
+            <form onsubmit="saveDiaperLog(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">時間 | Waktu</label>
+                    <input type="time" id="diaperTime" required class="w-full p-3 bg-slate-100 rounded-xl font-semibold border-0 focus:ring-2 focus:ring-sky-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">情況 | Kondisi</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="diaperType" value="小便 / 尿尿 (Kencing)" checked onchange="toggleDiaperAmountUI()" class="peer hidden">
+                            <div class="p-3 text-center rounded-xl border border-slate-200 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 transition">
+                                <i class="fa-solid fa-droplet text-xl mb-1 block"></i>
+                                <span class="text-xs font-bold block">小便 (尿尿)</span>
+                                <span class="text-[10px] font-normal opacity-80 block">Kencing</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="diaperType" value="大便 / 屎屎 (BAB / Pup)" onchange="toggleDiaperAmountUI()" class="peer hidden">
+                            <div class="p-3 text-center rounded-xl border border-slate-200 peer-checked:bg-amber-600 peer-checked:text-white peer-checked:border-amber-600 transition">
+                                <i class="fa-solid fa-poop text-xl mb-1 block"></i>
+                                <span class="text-xs font-bold block">大便 (屎屎)</span>
+                                <span class="text-[10px] font-normal opacity-80 block">BAB / Pup</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="diaperType" value="兩樣都有 (Kencing + Pup)" onchange="toggleDiaperAmountUI()" class="peer hidden">
+                            <div class="p-3 text-center rounded-xl border border-slate-200 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:border-purple-600 transition">
+                                <div class="flex justify-center gap-1 mb-1 text-lg">
+                                    <i class="fa-solid fa-droplet"></i>
+                                    <i class="fa-solid fa-poop"></i>
+                                </div>
+                                <span class="text-xs font-bold block">兩樣都有</span>
+                                <span class="text-[10px] font-normal opacity-80 block">Dua-duanya</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 單一份量選擇 (當選擇單獨尿尿或屎屎時顯示) -->
+                <div id="singleAmountSection">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">份量 | Jumlah</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="diaperAmount" value="少 (Sedikit)" class="peer hidden">
+                            <div class="p-2.5 text-center text-xs font-bold rounded-xl border border-slate-200 peer-checked:bg-slate-700 peer-checked:text-white transition">
+                                少量<br><span class="text-[10px] font-normal opacity-80">Sedikit</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="diaperAmount" value="中 (Sedang)" checked class="peer hidden">
+                            <div class="p-2.5 text-center text-xs font-bold rounded-xl border border-slate-200 peer-checked:bg-slate-700 peer-checked:text-white transition">
+                                適中<br><span class="text-[10px] font-normal opacity-80">Sedang</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="diaperAmount" value="多 (Banyak)" class="peer hidden">
+                            <div class="p-2.5 text-center text-xs font-bold rounded-xl border border-slate-200 peer-checked:bg-slate-700 peer-checked:text-white transition">
+                                多量<br><span class="text-[10px] font-normal opacity-80">Banyak</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 分開份量選擇 (當選擇兩樣都有時顯示) -->
+                <div id="bothAmountSection" class="hidden space-y-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div>
+                        <label class="block text-xs font-bold text-sky-700 mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-droplet text-sky-500"></i> 尿尿份量 | Air Kencing
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="peeAmount" value="少 (Sedikit)" class="peer hidden">
+                                <div class="p-2 text-center text-xs font-bold rounded-xl border border-slate-200 bg-white peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 transition">
+                                    少 <span class="text-[10px] font-normal opacity-80">Sedikit</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="peeAmount" value="中 (Sedang)" checked class="peer hidden">
+                                <div class="p-2 text-center text-xs font-bold rounded-xl border border-slate-200 bg-white peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 transition">
+                                    中 <span class="text-[10px] font-normal opacity-80">Sedang</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="peeAmount" value="多 (Banyak)" class="peer hidden">
+                                <div class="p-2 text-center text-xs font-bold rounded-xl border border-slate-200 bg-white peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 transition">
+                                    多 <span class="text-[10px] font-normal opacity-80">Banyak</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-amber-700 mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-poop text-amber-600"></i> 屎屎份量 | Pup / BAB
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="poopAmount" value="少 (Sedikit)" class="peer hidden">
+                                <div class="p-2 text-center text-xs font-bold rounded-xl border border-slate-200 bg-white peer-checked:bg-amber-600 peer-checked:text-white peer-checked:border-amber-600 transition">
+                                    少 <span class="text-[10px] font-normal opacity-80">Sedikit</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="poopAmount" value="中 (Sedang)" checked class="peer hidden">
+                                <div class="p-2 text-center text-xs font-bold rounded-xl border border-slate-200 bg-white peer-checked:bg-amber-600 peer-checked:text-white peer-checked:border-amber-600 transition">
+                                    中 <span class="text-[10px] font-normal opacity-80">Sedang</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="poopAmount" value="多 (Banyak)" class="peer hidden">
+                                <div class="p-2 text-center text-xs font-bold rounded-xl border border-slate-200 bg-white peer-checked:bg-amber-600 peer-checked:text-white peer-checked:border-amber-600 transition">
+                                    多 <span class="text-[10px] font-normal opacity-80">Banyak</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">顏色/狀態 | Warna / Tekstur (選填)</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="addTagToNote('diaperNote', '黃色/Kuning')" class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs rounded-lg">黃色 Kuning</button>
+                        <button type="button" onclick="addTagToNote('diaperNote', '綠色/Hijau')" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs rounded-lg">綠色 Hijau</button>
+                        <button type="button" onclick="addTagToNote('diaperNote', '稀/Cair')" class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs rounded-lg">便稀 Cair</button>
+                        <button type="button" onclick="addTagToNote('diaperNote', '硬/Keras')" class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs rounded-lg">便硬 Keras</button>
+                    </div>
+                </div>
+
+                <div>
+                    <input type="text" id="diaperNote" placeholder="備註 / Catatan" class="w-full p-3 bg-slate-100 rounded-xl text-sm border-0 focus:ring-2 focus:ring-sky-400">
+                </div>
+
+                <button type="submit" class="w-full bg-sky-500 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-sky-600 transition btn-active">
+                    儲存 | Simpan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Sleep -->
+    <div id="sleepModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-indigo-800 flex items-center gap-2">
+                    <i class="fa-solid fa-moon text-indigo-500"></i>
+                    紀錄睡眠 | Catat Tidur
+                </h3>
+                <button onclick="closeModal('sleepModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+            </div>
+
+            <form onsubmit="saveSleepLog(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">睡著時間 | Mula Tidur</label>
+                        <input type="time" id="sleepStart" required class="w-full p-3 bg-slate-100 rounded-xl font-semibold border-0 focus:ring-2 focus:ring-indigo-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">醒來時間 | Bangun Tidur</label>
+                        <input type="time" id="sleepEnd" class="w-full p-3 bg-slate-100 rounded-xl font-semibold border-0 focus:ring-2 focus:ring-indigo-400">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">備註 | Catatan</label>
+                    <input type="text" id="sleepNote" placeholder="例如: 睡得好 / Tidur nyenyak" class="w-full p-3 bg-slate-100 rounded-xl text-sm border-0 focus:ring-2 focus:ring-indigo-400">
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-500 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-indigo-600 transition btn-active">
+                    儲存 | Simpan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Other / Notes / Bath -->
+    <div id="otherModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-emerald-800 flex items-center gap-2">
+                    <i class="fa-solid fa-notes-medical text-emerald-500"></i>
+                    其他紀錄 | Catatan Lain
+                </h3>
+                <button onclick="closeModal('otherModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+            </div>
+
+            <form onsubmit="saveOtherLog(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">時間 | Waktu</label>
+                    <input type="time" id="otherTime" required class="w-full p-3 bg-slate-100 rounded-xl font-semibold border-0 focus:ring-2 focus:ring-emerald-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">項目 | Kategori</label>
+                    <select id="otherCategory" class="w-full p-3 bg-slate-100 rounded-xl font-medium border-0 focus:ring-2 focus:ring-emerald-400">
+                        <option value="洗澡 (Mandi)">🚿 洗澡 | Mandi</option>
+                        <option value="量體溫 (Cek Suhu)">🌡️ 量體溫 | Cek Suhu Badan</option>
+                        <option value="食藥/維他命 (Obat/Vitamin)">💊 食藥 / 維他命 | Minum Obat/Vitamin</option>
+                        <option value="日常備註 (Catatan Lain)">📝 日常備註 | Catatan Umum</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">詳細說明 / 體溫(°C) | Detail / Suhu</label>
+                    <input type="text" id="otherNote" required placeholder="例如：36.8度 / Mandi air hangat" class="w-full p-3 bg-slate-100 rounded-xl text-sm border-0 focus:ring-2 focus:ring-emerald-400">
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-emerald-600 transition btn-active">
+                    儲存 | Simpan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Daily Summary & Export Image -->
+    <div id="summaryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 my-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-image text-rose-500"></i>
+                    每日總結預覽 | Ringkasan
+                </h3>
+                <button onclick="closeModal('summaryModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <div id="summaryExportCard" class="bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 p-5 rounded-2xl border border-amber-200/80 shadow-inner space-y-4 text-slate-800 w-full min-w-[300px]">
+                    <div class="flex justify-between items-center border-b border-amber-200 pb-3">
+                        <div>
+                            <h2 class="text-lg font-bold font-bubble text-amber-700 flex items-center gap-1.5">
+                                <i class="fa-solid fa-baby"></i> 嬰兒照顧總結
+                            </h2>
+                            <p class="text-[11px] text-amber-600/90 font-medium">Laporan Perawatan Harian</p>
+                        </div>
+                        <div class="text-right">
+                            <span id="summaryCardDate" class="text-xs font-black bg-amber-200/80 text-amber-800 px-2.5 py-1 rounded-lg block"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-center">
+                        <div class="bg-white/80 backdrop-blur-sm p-2.5 rounded-xl border border-amber-100">
+                            <span class="text-[10px] text-slate-500 font-bold block">總餵奶量 | Susu</span>
+                            <span id="summaryTotalMilk" class="text-base font-black text-amber-600">0 ml</span>
+                        </div>
+                        <div class="bg-white/80 backdrop-blur-sm p-2.5 rounded-xl border border-amber-100">
+                            <span class="text-[10px] text-slate-500 font-bold block">換尿片次數 | Popok</span>
+                            <span id="summaryTotalDiaper" class="text-base font-black text-sky-600">0 次</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-slate-600 flex items-center gap-1">
+                            <i class="fa-solid fa-list-ul text-amber-500"></i> 詳細紀錄列表 :
+                        </h4>
+                        <div id="summaryCardItems" class="space-y-1.5 max-h-[220px] overflow-y-auto pr-1 text-xs"></div>
+                    </div>
+
+                    <div class="text-center pt-2 border-t border-amber-200/60 text-[10px] text-amber-700/70 font-medium">
+                        Generated by Baby Care Tracker 🍼
+                    </div>
+                </div>
+            </div>
+
+            <button id="downloadBtn" onclick="exportSummaryImage()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md transition btn-active flex items-center justify-center gap-2">
+                <i class="fa-solid fa-download"></i>
+                <span>下載為圖片 | Unduh Gambar</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const CORRECT_PASSCODE = "2026";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-baby-tracker-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "demo-key",
+            authDomain: "demo.firebaseapp.com",
+            projectId: "demo-project"
+        };
+
+        let app, db, auth, currentUser = null;
+        let allCloudLogs = [];
+
+        // Initialize Firebase
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            initAuth();
+        } catch (e) {
+            console.error("Firebase init error:", e);
+            showSyncStatus(false);
+        }
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                currentUser = auth.currentUser;
+                if (currentUser) {
+                    startFirestoreListener();
+                }
+            } catch (err) {
+                console.error("Auth error:", err);
+                showSyncStatus(false);
+            }
+        }
+
+        function showSyncStatus(isSynced) {
+            const statusEl = document.getElementById('syncStatus');
+            if (statusEl) {
+                if (isSynced) {
+                    statusEl.innerHTML = '<i class="fa-solid fa-cloud text-emerald-300"></i> 雲端同步中';
+                } else {
+                    statusEl.innerHTML = '<i class="fa-solid fa-cloud-slash text-rose-300"></i> 離線模式';
+                }
+            }
+        }
+
+        // Real-time listener for public cloud logs (Rule 1 & Rule 2 compliant)
+        function startFirestoreListener() {
+            if (!currentUser || !db) return;
+            const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'baby_logs');
+            
+            onSnapshot(logsRef, (snapshot) => {
+                allCloudLogs = [];
+                snapshot.forEach((docSnap) => {
+                    allCloudLogs.push({
+                        docId: docSnap.id,
+                        ...docSnap.data()
+                    });
+                });
+                showSyncStatus(true);
+                renderLogs();
+            }, (error) => {
+                console.error("Firestore snapshot error:", error);
+                showSyncStatus(false);
+            });
+        }
+
+        // Helper function to save logs to Firestore
+        async function saveLogToCloud(item) {
+            if (!currentUser || !db) return;
+            try {
+                const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'baby_logs');
+                await addDoc(logsRef, item);
+            } catch (err) {
+                console.error("Error saving log to Firestore:", err);
+            }
+        }
+
+        // Global functions exposed to window
+        window.handleAuthSubmit = function(e) {
+            e.preventDefault();
+            const input = document.getElementById('passcodeInput');
+            const errorMsg = document.getElementById('authErrorMsg');
+            const authCard = document.getElementById('authCard');
+
+            if (input.value === CORRECT_PASSCODE) {
+                sessionStorage.setItem('baby_tracker_authenticated', 'true');
+                unlockApp();
+            } else {
+                errorMsg.classList.remove('hidden');
+                authCard.classList.remove('animate-shake');
+                void authCard.offsetWidth;
+                authCard.classList.add('animate-shake');
+                input.value = '';
+                input.focus();
+            }
+        };
+
+        window.unlockApp = function() {
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            setCurrentTimes();
+            renderLogs();
+        };
+
+        window.lockApp = function() {
+            sessionStorage.removeItem('baby_tracker_authenticated');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('authOverlay').classList.remove('hidden');
+            document.getElementById('passcodeInput').value = '';
+            document.getElementById('authErrorMsg').classList.add('hidden');
+        };
+
+        // Date setup
+        const logDateElem = document.getElementById('logDate');
+        if (logDateElem) {
+            logDateElem.value = new Date().toISOString().split('T')[0];
+        }
+
+        // Quick date switcher helper functions
+        window.changeDate = function(offsetDays) {
+            const dateInput = document.getElementById('logDate');
+            if (!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+            
+            const current = new Date(dateInput.value);
+            current.setDate(current.getDate() + offsetDays);
+            
+            dateInput.value = current.toISOString().split('T')[0];
+            renderLogs();
+        };
+
+        window.setDateToOffset = function(offsetDays) {
+            const target = new Date();
+            target.setDate(target.getDate() + offsetDays);
+            document.getElementById('logDate').value = target.toISOString().split('T')[0];
+            renderLogs();
+        };
+
+        window.switchTab = function(tab) {
+            const pageCare = document.getElementById('pageCareLog');
+            const pageTrans = document.getElementById('pageTranslator');
+            const btnCare = document.getElementById('navBtnCare');
+            const btnTrans = document.getElementById('navBtnTrans');
+
+            if (tab === 'care') {
+                pageCare.classList.remove('hidden');
+                pageTrans.classList.add('hidden');
+                btnCare.className = "flex-1 flex flex-col items-center justify-center h-full text-amber-600 font-bold transition";
+                btnTrans.className = "flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition";
+            } else if (tab === 'trans') {
+                pageCare.classList.add('hidden');
+                pageTrans.classList.remove('hidden');
+                btnTrans.className = "flex-1 flex flex-col items-center justify-center h-full text-indigo-600 font-bold transition";
+                btnCare.className = "flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition";
+            }
+        };
+
+        let isIndoToChinese = true;
+        window.toggleTranslationDirection = function() {
+            isIndoToChinese = !isIndoToChinese;
+            const dirBtnText = document.getElementById('transDirText');
+            const inputArea = document.getElementById('transInput');
+            const inputLabel = document.getElementById('transInputLabel');
+            
+            if (isIndoToChinese) {
+                dirBtnText.innerText = '印 ➔ 中 (Indo ➔ 中文)';
+                inputLabel.innerText = '輸入印尼文 (可夾雜英文)：';
+                inputArea.placeholder = 'Tulis teks di sini... ( boleh mix English / 中文 )';
+            } else {
+                dirBtnText.innerText = '中 ➔ 印 (中文 ➔ Indo)';
+                inputLabel.innerText = '輸入中文 (可夾雜英文)：';
+                inputArea.placeholder = '在此輸入中文... (可夾雜英文 / Cantonese)';
+            }
+            document.getElementById('transOutputBox').classList.add('hidden');
+            document.getElementById('transResult').innerText = '';
+        };
+
+        window.useQuickPhrase = function(zhText, indoText) {
+            const inputArea = document.getElementById('transInput');
+            const resultBox = document.getElementById('transOutputBox');
+            const resultEl = document.getElementById('transResult');
+
+            if (isIndoToChinese) {
+                inputArea.value = indoText;
+                resultEl.innerText = zhText;
+            } else {
+                inputArea.value = zhText;
+                resultEl.innerText = indoText;
+            }
+            resultBox.classList.remove('hidden');
+        };
+
+        window.translateText = async function() {
+            const input = document.getElementById('transInput').value.trim();
+            if (!input) return;
+
+            const btn = document.getElementById('translateBtn');
+            const resultBox = document.getElementById('transOutputBox');
+            const resultEl = document.getElementById('transResult');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            resultBox.classList.remove('hidden');
+            resultEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i> AI 翻譯中... / Menerjemahkan...';
+
+            const systemPrompt = isIndoToChinese 
+                ? "You are an expert bilingual translator for Hong Kong households. Translate the input naturally into Traditional Chinese. Output ONLY the translated text."
+                : "You are an expert bilingual translator for Hong Kong households. Translate the input naturally into Indonesian. Output ONLY the translated text.";
+
+            const payload = {
+                contents: [{ parts: [{ text: input }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (translatedText) {
+                    resultEl.innerText = translatedText.trim();
+                } else {
+                    resultEl.innerText = '翻譯失敗，請重試 / Gagal menerjemahkan.';
+                }
+            } catch (err) {
+                resultEl.innerText = '連線失敗或回應超時 / Error koneksi';
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+            }
+        };
+
+        window.copyTranslation = function() {
+            const translated = document.getElementById('transResult').innerText.trim();
+            if (!translated || translated.includes('翻譯')) return;
+
+            const tempInput = document.createElement('textarea');
+            tempInput.value = translated;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            const resultEl = document.getElementById('transResult');
+            const oldText = resultEl.innerText;
+            resultEl.innerText = '✅ 已複製！ / Sudah disalin!';
+            setTimeout(() => { resultEl.innerText = oldText; }, 1200);
+        };
+
+        window.setCurrentTimes = function() {
+            const now = new Date();
+            const timeString = now.toTimeString().substring(0, 5);
+            document.getElementById('milkTime').value = timeString;
+            document.getElementById('diaperTime').value = timeString;
+            document.getElementById('sleepStart').value = timeString;
+            document.getElementById('otherTime').value = timeString;
+        };
+
+        window.setMilkAmount = function(val) {
+            document.getElementById('milkAmount').value = val;
+            document.getElementById('amountDisplay').innerText = val + ' ml';
+        };
+
+        window.addTagToNote = function(inputId, tagText) {
+            const input = document.getElementById(inputId);
+            input.value = input.value ? input.value + ' ' + tagText : tagText;
+        };
+
+        window.openModal = function(id) {
+            setCurrentTimes();
+            if (id === 'diaperModal') {
+                toggleDiaperAmountUI();
+            }
+            document.getElementById(id).classList.remove('hidden');
+        };
+
+        window.toggleDiaperAmountUI = function() {
+            const selectedType = document.querySelector('input[name="diaperType"]:checked')?.value || '';
+            const isBoth = selectedType.includes('兩樣都有');
+            
+            const singleSection = document.getElementById('singleAmountSection');
+            const bothSection = document.getElementById('bothAmountSection');
+
+            if (isBoth) {
+                singleSection.classList.add('hidden');
+                bothSection.classList.remove('hidden');
+            } else {
+                singleSection.classList.remove('hidden');
+                bothSection.classList.add('hidden');
+            }
+        };
+
+        window.saveMilkLog = async function(e) {
+            e.preventDefault();
+            const time = document.getElementById('milkTime').value;
+            const milkType = document.querySelector('input[name="milkType"]:checked').value;
+            const amount = parseInt(document.getElementById('milkAmount').value, 10);
+            const note = document.getElementById('milkNote').value.trim();
+
+            const item = {
+                date: document.getElementById('logDate').value,
+                id: Date.now(),
+                category: 'milk',
+                time: time,
+                title: '餵奶 | Minum Susu',
+                details: `${milkType} - ${amount} ml`,
+                amount: amount,
+                note: note,
+                icon: 'fa-bottle-droplet',
+                colorClass: 'bg-amber-100 text-amber-700 border-amber-300'
+            };
+
+            await saveLogToCloud(item);
+            document.getElementById('milkNote').value = '';
+            closeModal('milkModal');
+        };
+
+        window.saveDiaperLog = async function(e) {
+            e.preventDefault();
+            const time = document.getElementById('diaperTime').value;
+            const type = document.querySelector('input[name="diaperType"]:checked').value;
+            const isBoth = type.includes('兩樣都有');
+            const note = document.getElementById('diaperNote').value.trim();
+
+            let amountDetails = '';
+            if (isBoth) {
+                const peeAmt = document.querySelector('input[name="peeAmount"]:checked')?.value || '中 (Sedang)';
+                const poopAmt = document.querySelector('input[name="poopAmount"]:checked')?.value || '中 (Sedang)';
+                amountDetails = `[尿: ${peeAmt} | 屎: ${poopAmt}]`;
+            } else {
+                const singleAmt = document.querySelector('input[name="diaperAmount"]:checked')?.value || '中 (Sedang)';
+                amountDetails = `份量: ${singleAmt}`;
+            }
+
+            const item = {
+                date: document.getElementById('logDate').value,
+                id: Date.now(),
+                category: 'diaper',
+                time: time,
+                title: '換片 | Ganti Popok',
+                details: `${type} - ${amountDetails}`,
+                note: note,
+                icon: 'fa-baby-carriage',
+                colorClass: 'bg-sky-100 text-sky-700 border-sky-300'
+            };
+
+            await saveLogToCloud(item);
+            document.getElementById('diaperNote').value = '';
+            closeModal('diaperModal');
+        };
+
+        window.saveSleepLog = async function(e) {
+            e.preventDefault();
+            const start = document.getElementById('sleepStart').value;
+            const end = document.getElementById('sleepEnd').value;
+            const note = document.getElementById('sleepNote').value.trim();
+
+            let timeRange = start;
+            if (end) timeRange += ` ~ ${end}`;
+
+            const item = {
+                date: document.getElementById('logDate').value,
+                id: Date.now(),
+                category: 'sleep',
+                time: start,
+                title: '睡眠 | Tidur',
+                details: timeRange,
+                note: note,
+                icon: 'fa-moon',
+                colorClass: 'bg-indigo-100 text-indigo-700 border-indigo-300'
+            };
+
+            await saveLogToCloud(item);
+            document.getElementById('sleepNote').value = '';
+            closeModal('sleepModal');
+        };
+
+        window.saveOtherLog = async function(e) {
+            e.preventDefault();
+            const time = document.getElementById('otherTime').value;
+            const category = document.getElementById('otherCategory').value;
+            const note = document.getElementById('otherNote').value.trim();
+
+            const item = {
+                date: document.getElementById('logDate').value,
+                id: Date.now(),
+                category: 'other',
+                time: time,
+                title: category,
+                details: note,
+                note: '',
+                icon: 'fa-notes-medical',
+                colorClass: 'bg-emerald-100 text-emerald-700 border-emerald-300'
+            };
+
+            await saveLogToCloud(item);
+            document.getElementById('otherNote').value = '';
+            closeModal('otherModal');
+        };
+
+        window.closeModal = function(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        };
+
+        window.showMsg = function(title, text) {
+            document.getElementById('msgModalTitle').innerText = title;
+            document.getElementById('msgModalText').innerText = text;
+            document.getElementById('messageModal').classList.remove('hidden');
+        };
+
+        window.deleteLog = async function(docId) {
+            if (!currentUser || !db) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'baby_logs', docId));
+            } catch (err) {
+                console.error("Error deleting log:", err);
+            }
+        };
+
+        window.confirmClearDayLogs = function() {
+            const selectedDate = document.getElementById('logDate').value;
+            document.getElementById('confirmTitle').innerText = "清空當日紀錄 | Hapus Data Hari Ini";
+            document.getElementById('confirmText').innerText = `確定要刪除 ${selectedDate} 的所有紀錄嗎？\nYakin ingin menghapus semua catatan pada tanggal ini?`;
+            
+            const yesBtn = document.getElementById('confirmYesBtn');
+            yesBtn.onclick = async function() {
+                closeModal('confirmModal');
+                const logsToDelete = allCloudLogs.filter(l => l.date === selectedDate);
+                for (let l of logsToDelete) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'baby_logs', l.docId));
+                }
+            };
+            document.getElementById('confirmModal').classList.remove('hidden');
+        };
+
+        window.renderLogs = function() {
+            const selectedDate = document.getElementById('logDate').value;
+            const dayLogs = allCloudLogs.filter(l => l.date === selectedDate);
+            dayLogs.sort((a, b) => (b.time || "").localeCompare(a.time || ""));
+
+            const logContainer = document.getElementById('logList');
+            if (!logContainer) return;
+            logContainer.innerHTML = '';
+
+            let totalMilk = 0;
+            let totalDiaper = 0;
+
+            if (dayLogs.length === 0) {
+                logContainer.innerHTML = `
+                    <div class="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200">
+                        <i class="fa-solid fa-baby-carriage text-4xl text-slate-300 mb-2"></i>
+                        <p class="text-sm font-medium text-slate-500">今日暫無紀錄</p>
+                        <p class="text-xs text-slate-400">Belum ada catatan hari ini</p>
+                    </div>
+                `;
+            } else {
+                dayLogs.forEach(log => {
+                    if (log.category === 'milk' && log.amount) totalMilk += log.amount;
+                    if (log.category === 'diaper') totalDiaper += 1;
+
+                    const card = document.createElement('div');
+                    card.className = `bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-start gap-3 relative overflow-hidden`;
+
+                    card.innerHTML = `
+                        <div class="w-10 h-10 rounded-xl ${log.colorClass || 'bg-slate-100 text-slate-700'} border flex items-center justify-center text-lg shrink-0 mt-0.5">
+                            <i class="fa-solid ${log.icon || 'fa-note-sticky'}"></i>
+                        </div>
+                        <div class="flex-grow pr-6">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">${log.time || '--:--'}</span>
+                                <span class="font-bold text-slate-800 text-sm">${log.title || ''}</span>
+                            </div>
+                            <div class="text-sm text-slate-700 font-medium mt-1">${log.details || ''}</div>
+                            ${log.note ? `<div class="text-xs text-slate-500 mt-1 bg-amber-50/60 px-2 py-1 rounded-lg border border-amber-100 inline-block"><i class="fa-regular fa-comment-dots mr-1"></i>${log.note}</div>` : ''}
+                        </div>
+                        <button onclick="deleteLog('${log.docId}')" class="absolute top-3 right-3 text-slate-300 hover:text-rose-500 p-1 text-sm transition">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                    logContainer.appendChild(card);
+                });
+            }
+
+            document.getElementById('totalMilk').innerText = totalMilk;
+            document.getElementById('totalDiaper').innerText = totalDiaper;
+        };
+
+        window.generateSummary = function() {
+            const selectedDate = document.getElementById('logDate').value;
+            const dayLogs = allCloudLogs.filter(l => l.date === selectedDate);
+            dayLogs.sort((a, b) => (b.time || "").localeCompare(a.time || ""));
+            
+            document.getElementById('summaryCardDate').innerText = selectedDate;
+            
+            let totalMilk = 0;
+            let totalDiaper = 0;
+            const itemsContainer = document.getElementById('summaryCardItems');
+            itemsContainer.innerHTML = '';
+
+            if (dayLogs.length === 0) {
+                itemsContainer.innerHTML = `<div class="text-center text-slate-400 py-4 italic">本日無任何紀錄 | Tidak ada catatan</div>`;
+            } else {
+                dayLogs.forEach(log => {
+                    if (log.category === 'milk' && log.amount) totalMilk += log.amount;
+                    if (log.category === 'diaper') totalDiaper += 1;
+
+                    const row = document.createElement('div');
+                    row.className = 'bg-white/90 p-2 rounded-lg border border-amber-100/60 flex items-center justify-between text-slate-700';
+                    row.innerHTML = `
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <span class="font-bold text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 shrink-0">${log.time}</span>
+                            <span class="font-semibold text-xs truncate">${log.title.split('|')[0].trim()}</span>
+                            <span class="text-[11px] text-slate-500 truncate">- ${log.details}</span>
+                        </div>
+                        ${log.note ? `<span class="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 shrink-0">${log.note}</span>` : ''}
+                    `;
+                    itemsContainer.appendChild(row);
+                });
+            }
+
+            document.getElementById('summaryTotalMilk').innerText = totalMilk + ' ml';
+            document.getElementById('summaryTotalDiaper').innerText = totalDiaper + ' 次';
+
+            openModal('summaryModal');
+        };
+
+        window.exportSummaryImage = function() {
+            const card = document.getElementById('summaryExportCard');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const originalText = downloadBtn.innerHTML;
+
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 圖片生成中...';
+
+            html2canvas(card, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: null
+            }).then(canvas => {
+                const dateVal = document.getElementById('logDate').value;
+                const imgData = canvas.toDataURL('image/png');
+
+                try {
+                    const link = document.createElement('a');
+                    link.download = `BB照顧總結_${dateVal}.png`;
+                    link.href = imgData;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (e) {
+                    console.warn("Direct download failed:", e);
+                }
+
+                setTimeout(() => {
+                    downloadBtn.disabled = false;
+                    downloadBtn.innerHTML = originalText;
+                    const newWin = window.open();
+                    if (newWin) {
+                        newWin.document.write(`<title>BB照顧總結圖卡</title><p style="text-align:center;font-family:sans-serif;color:#666;">請長按或右鍵點擊下方圖片儲存 | Long press or right click image to save:</p><img src="${imgData}" style="max-width:100%;height:auto;display:block;margin:0 auto;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);"/>`);
+                    } else {
+                        showMsg('提示', '請在圖卡上長按或按右鍵選擇「儲存圖片」！');
+                    }
+                }, 500);
+            }).catch(err => {
+                console.error("Canvas export failed:", err);
+                showMsg('錯誤', '匯出圖片失敗，請重試。');
+                downloadBtn.disabled = false;
+                downloadBtn.innerHTML = originalText;
+            });
+        };
+
+        window.onload = function() {
+            const isAuth = sessionStorage.getItem('baby_tracker_authenticated');
+            if (isAuth === 'true') {
+                unlockApp();
+            } else {
+                document.getElementById('passcodeInput').focus();
+            }
+        };
+    </script>
+</body>
+</html>
