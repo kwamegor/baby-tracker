@@ -74,7 +74,9 @@
                     </h1>
                     <p class="text-xs text-amber-100 font-medium flex items-center gap-1.5">
                         <span>嬰兒照顧日誌</span>
-                        <span id="syncStatus" class="inline-flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full text-[10px]"><i class="fa-solid fa-spinner fa-spin text-amber-200"></i> 連線中...</span>
+                        <span id="syncStatus" class="inline-flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full text-[10px]">
+                            <i class="fa-solid fa-spinner fa-spin text-amber-200"></i> 連線中...
+                        </span>
                     </p>
                 </div>
                 <div class="flex items-center gap-1.5">
@@ -620,7 +622,7 @@
         </div>
     </div>
 
-    <!-- JavaScript Base Functions (獨立於 Firebase) -->
+    <!-- JavaScript Base Functions -->
     <script>
         const CORRECT_PASSCODE = "2026";
 
@@ -685,29 +687,81 @@
 
         let app, db;
         let allCloudLogs = [];
+        let isUsingLocalStorage = false;
+
+        // LocalStorage Helpers for offline fallback
+        function getLocalLogs() {
+            try {
+                return JSON.parse(localStorage.getItem('local_baby_logs') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveLocalLogs(logs) {
+            try {
+                localStorage.setItem('local_baby_logs', JSON.stringify(logs));
+            } catch (e) {
+                console.error("Failed to save local storage", e);
+            }
+        }
+
+        function updateStatusUI(type) {
+            const statusEl = document.getElementById('syncStatus');
+            if (!statusEl) return;
+            if (type === 'online') {
+                statusEl.className = "inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-100 px-2 py-0.5 rounded-full text-[10px]";
+                statusEl.innerHTML = '<i class="fa-solid fa-cloud text-emerald-300"></i> 雲端已連線';
+            } else if (type === 'local') {
+                statusEl.className = "inline-flex items-center gap-1 bg-amber-500/30 text-amber-100 px-2 py-0.5 rounded-full text-[10px]";
+                statusEl.innerHTML = '<i class="fa-solid fa-hard-drive text-amber-200"></i> 本地模式';
+            } else {
+                statusEl.className = "inline-flex items-center gap-1 bg-rose-500/30 text-rose-100 px-2 py-0.5 rounded-full text-[10px]";
+                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-200"></i> 請核對資料庫權限';
+            }
+        }
 
         try {
             app = initializeApp(firebaseConfig);
             db = getDatabase(app);
+            
+            // Monitor Connection state
+            const connectedRef = ref(db, ".info/connected");
+            onValue(connectedRef, (snap) => {
+                if (snap.val() === true) {
+                    isUsingLocalStorage = false;
+                    updateStatusUI('online');
+                } else {
+                    // Timeout fallback to local mode if connection is slow
+                    setTimeout(() => {
+                        if (allCloudLogs.length === 0) {
+                            isUsingLocalStorage = true;
+                            allCloudLogs = getLocalLogs();
+                            updateStatusUI('local');
+                            renderLogs();
+                        }
+                    }, 3000);
+                }
+            });
+
             startDatabaseListener();
         } catch (e) {
             console.error("Firebase init error:", e);
-            showSyncStatus(false);
+            switchToLocalMode();
         }
 
-        function showSyncStatus(isSynced) {
-            const statusEl = document.getElementById('syncStatus');
-            if (statusEl) {
-                if (isSynced) {
-                    statusEl.innerHTML = '<i class="fa-solid fa-cloud text-emerald-300"></i> 雲端同步中';
-                } else {
-                    statusEl.innerHTML = '<i class="fa-solid fa-cloud-slash text-rose-300"></i> 離線模式';
-                }
-            }
+        function switchToLocalMode() {
+            isUsingLocalStorage = true;
+            allCloudLogs = getLocalLogs();
+            updateStatusUI('local');
+            renderLogs();
         }
 
         function startDatabaseListener() {
-            if (!db) return;
+            if (!db) {
+                switchToLocalMode();
+                return;
+            }
             const logsRef = ref(db, 'baby_logs');
             
             onValue(logsRef, (snapshot) => {
@@ -721,22 +775,37 @@
                         });
                     });
                 }
-                showSyncStatus(true);
+                isUsingLocalStorage = false;
+                updateStatusUI('online');
                 renderLogs();
             }, (error) => {
                 console.error("Database read error:", error);
-                showSyncStatus(false);
+                // Switch to Local Mode if permission denied or error
+                updateStatusUI('error');
+                switchToLocalMode();
             });
         }
 
         async function saveLogToCloud(item) {
-            if (!db) return;
+            if (isUsingLocalStorage || !db) {
+                const localItem = { dbKey: 'local_' + Date.now(), ...item };
+                allCloudLogs.push(localItem);
+                saveLocalLogs(allCloudLogs);
+                renderLogs();
+                return;
+            }
+
             try {
                 const logsRef = ref(db, 'baby_logs');
                 await push(logsRef, item);
             } catch (err) {
                 console.error("Error saving log:", err);
-                showMsg('連線錯誤', '無法儲存至雲端，請檢查資料庫規則。');
+                // Save locally on failure
+                const localItem = { dbKey: 'local_' + Date.now(), ...item };
+                allCloudLogs.push(localItem);
+                saveLocalLogs(allCloudLogs);
+                renderLogs();
+                showMsg('連線提示', '無法儲存至雲端，已為您儲存在本地紀錄！');
             }
         }
 
@@ -1037,7 +1106,13 @@
         };
 
         window.deleteLog = async function(dbKey) {
-            if (!db) return;
+            if (isUsingLocalStorage || !dbKey || dbKey.startsWith('local_')) {
+                allCloudLogs = allCloudLogs.filter(l => l.dbKey !== dbKey);
+                saveLocalLogs(allCloudLogs);
+                renderLogs();
+                return;
+            }
+
             try {
                 const itemRef = ref(db, `baby_logs/${dbKey}`);
                 await remove(itemRef);
@@ -1055,9 +1130,19 @@
             yesBtn.onclick = async function() {
                 closeModal('confirmModal');
                 const logsToDelete = allCloudLogs.filter(l => l.date === selectedDate);
+                
+                if (isUsingLocalStorage) {
+                    allCloudLogs = allCloudLogs.filter(l => l.date !== selectedDate);
+                    saveLocalLogs(allCloudLogs);
+                    renderLogs();
+                    return;
+                }
+
                 for (let l of logsToDelete) {
-                    const itemRef = ref(db, `baby_logs/${l.dbKey}`);
-                    await remove(itemRef);
+                    if (l.dbKey) {
+                        const itemRef = ref(db, `baby_logs/${l.dbKey}`);
+                        await remove(itemRef);
+                    }
                 }
             };
             document.getElementById('confirmModal').classList.remove('hidden');
