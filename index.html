@@ -688,6 +688,7 @@
         let app, db;
         let allCloudLogs = [];
         let isUsingLocalStorage = false;
+        let hasLoadedFromCloud = false;
 
         // LocalStorage Helpers for offline fallback
         function getLocalLogs() {
@@ -715,9 +716,9 @@
             } else if (type === 'local') {
                 statusEl.className = "inline-flex items-center gap-1 bg-amber-500/30 text-amber-100 px-2 py-0.5 rounded-full text-[10px]";
                 statusEl.innerHTML = '<i class="fa-solid fa-hard-drive text-amber-200"></i> 本地模式';
-            } else {
+            } else if (type === 'error') {
                 statusEl.className = "inline-flex items-center gap-1 bg-rose-500/30 text-rose-100 px-2 py-0.5 rounded-full text-[10px]";
-                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-200"></i> 請核對資料庫權限';
+                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-200"></i> 資料庫權限拒絕';
             }
         }
 
@@ -725,24 +726,12 @@
             app = initializeApp(firebaseConfig);
             db = getDatabase(app);
             
-            // Monitor Connection state
-            const connectedRef = ref(db, ".info/connected");
-            onValue(connectedRef, (snap) => {
-                if (snap.val() === true) {
-                    isUsingLocalStorage = false;
-                    updateStatusUI('online');
-                } else {
-                    // Timeout fallback to local mode if connection is slow
-                    setTimeout(() => {
-                        if (allCloudLogs.length === 0) {
-                            isUsingLocalStorage = true;
-                            allCloudLogs = getLocalLogs();
-                            updateStatusUI('local');
-                            renderLogs();
-                        }
-                    }, 3000);
+            // 超時降級（延長至 6 秒）
+            setTimeout(() => {
+                if (!hasLoadedFromCloud) {
+                    switchToLocalMode();
                 }
-            });
+            }, 6000);
 
             startDatabaseListener();
         } catch (e) {
@@ -765,6 +754,7 @@
             const logsRef = ref(db, 'baby_logs');
             
             onValue(logsRef, (snapshot) => {
+                hasLoadedFromCloud = true;
                 allCloudLogs = [];
                 const data = snapshot.val();
                 if (data) {
@@ -800,7 +790,6 @@
                 await push(logsRef, item);
             } catch (err) {
                 console.error("Error saving log:", err);
-                // Save locally on failure
                 const localItem = { dbKey: 'local_' + Date.now(), ...item };
                 allCloudLogs.push(localItem);
                 saveLocalLogs(allCloudLogs);
@@ -1288,3 +1277,4 @@
     </script>
 </body>
 </html>
+```eof
