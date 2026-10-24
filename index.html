@@ -378,7 +378,7 @@
                     <label class="block text-xs font-bold text-slate-600 mb-1">情況 | Kondisi</label>
                     <div class="grid grid-cols-3 gap-2">
                         <label class="cursor-pointer">
-                            <input type="radio" name="diaperType" value="小便 / 尿尿 (Kencing)" checked onchange="toggleDiaperAmountUI()" class="peer hidden">
+                            <input type="radio" name="diaperType" value="小便 / 尿尿 (Kencing)" checked onchange="toggleDiaperUI()" class="peer hidden">
                             <div class="p-3 text-center rounded-xl border border-slate-200 peer-checked:bg-sky-500 peer-checked:text-white transition">
                                 <i class="fa-solid fa-droplet text-xl mb-1 block"></i>
                                 <span class="text-xs font-bold block">小便</span>
@@ -386,7 +386,7 @@
                             </div>
                         </label>
                         <label class="cursor-pointer">
-                            <input type="radio" name="diaperType" value="大便 / 屎屎 (BAB / Pup)" onchange="toggleDiaperAmountUI()" class="peer hidden">
+                            <input type="radio" name="diaperType" value="大便 / 屎屎 (BAB / Pup)" onchange="toggleDiaperUI()" class="peer hidden">
                             <div class="p-3 text-center rounded-xl border border-slate-200 peer-checked:bg-amber-600 peer-checked:text-white transition">
                                 <i class="fa-solid fa-poop text-xl mb-1 block"></i>
                                 <span class="text-xs font-bold block">大便</span>
@@ -394,7 +394,7 @@
                             </div>
                         </label>
                         <label class="cursor-pointer">
-                            <input type="radio" name="diaperType" value="兩樣都有 (Kencing + Pup)" onchange="toggleDiaperAmountUI()" class="peer hidden">
+                            <input type="radio" name="diaperType" value="兩樣都有 (Kencing + Pup)" onchange="toggleDiaperUI()" class="peer hidden">
                             <div class="p-3 text-center rounded-xl border border-slate-200 peer-checked:bg-purple-600 peer-checked:text-white transition">
                                 <div class="flex justify-center gap-1 mb-1 text-lg">
                                     <i class="fa-solid fa-droplet"></i>
@@ -482,6 +482,55 @@
                                 </div>
                             </label>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 🌟 大便顏色選擇區塊 (Poop Color Selection) -->
+                <div id="poopColorSection" class="hidden space-y-2 p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60">
+                    <label class="block text-xs font-bold text-amber-900 flex items-center gap-1">
+                        <i class="fa-solid fa-palette text-amber-600"></i> 大便顏色 | Warna Pup
+                    </label>
+                    <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="poopColor" value="黃色 (Kuning)" checked class="peer hidden">
+                            <div class="p-2 text-center rounded-xl border border-slate-200 bg-white peer-checked:bg-amber-400 peer-checked:text-amber-950 transition">
+                                <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block border border-black/10"></span>
+                                <span class="text-[11px] font-bold block">黃色</span>
+                                <span class="text-[9px] font-normal opacity-80 block">Kuning</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="poopColor" value="綠色 (Hijau)" class="peer hidden">
+                            <div class="p-2 text-center rounded-xl border border-slate-200 bg-white peer-checked:bg-emerald-600 peer-checked:text-white transition">
+                                <span class="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span>
+                                <span class="text-[11px] font-bold block">綠色</span>
+                                <span class="text-[9px] font-normal opacity-80 block">Hijau</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="poopColor" value="褐色/啡色 (Cokelat)" class="peer hidden">
+                            <div class="p-2 text-center rounded-xl border border-slate-200 bg-white peer-checked:bg-amber-800 peer-checked:text-white transition">
+                                <span class="w-3 h-3 rounded-full bg-amber-800 inline-block"></span>
+                                <span class="text-[11px] font-bold block">褐色</span>
+                                <span class="text-[9px] font-normal opacity-80 block">Cokelat</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="poopColor" value="紅色/帶血 (Merah/Darah)" class="peer hidden">
+                            <div class="p-2 text-center rounded-xl border border-slate-200 bg-white peer-checked:bg-rose-600 peer-checked:text-white transition">
+                                <span class="w-3 h-3 rounded-full bg-rose-600 inline-block"></span>
+                                <span class="text-[11px] font-bold block">紅色 ⚠️</span>
+                                <span class="text-[9px] font-normal opacity-80 block">Merah</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="poopColor" value="灰白色 (Pucat)" class="peer hidden">
+                            <div class="p-2 text-center rounded-xl border border-slate-200 bg-white peer-checked:bg-slate-400 peer-checked:text-white transition">
+                                <span class="w-3 h-3 rounded-full bg-slate-200 inline-block border border-slate-400"></span>
+                                <span class="text-[11px] font-bold block">灰白 ⚠️</span>
+                                <span class="text-[9px] font-normal opacity-80 block">Pucat</span>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
@@ -625,6 +674,8 @@
     <!-- JavaScript Base Functions -->
     <script>
         const CORRECT_PASSCODE = "2026";
+        // 🔑 請在此處填入你在 Google AI Studio 申請的 Gemini API Key
+        const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
 
         function unlockApp() {
             document.getElementById('authOverlay').classList.add('hidden');
@@ -675,10 +726,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getDatabase, ref, push, remove, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-const firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyAfGu86QjIRvtCwI86c6fEBk-y2vjIy2mw",
             authDomain: "baby-tracker-199b2.firebaseapp.com",
-            databaseURL: "https://baby-tracker-199b2-default-rtdb.firebaseio.com", // ⬅️ 修改這裡！移除原本的 asia-southeast1 後綴
+            databaseURL: "https://baby-tracker-199b2-default-rtdb.firebaseio.com",
             projectId: "baby-tracker-199b2",
             storageBucket: "baby-tracker-199b2.firebasestorage.app",
             messagingSenderId: "1042532845387",
@@ -690,7 +741,6 @@ const firebaseConfig = {
         let isUsingLocalStorage = false;
         let hasLoadedFromCloud = false;
 
-        // LocalStorage Helpers for offline fallback
         function getLocalLogs() {
             try {
                 return JSON.parse(localStorage.getItem('local_baby_logs') || '[]');
@@ -726,7 +776,6 @@ const firebaseConfig = {
             app = initializeApp(firebaseConfig);
             db = getDatabase(app);
             
-            // 超時降級（延長至 6 秒）
             setTimeout(() => {
                 if (!hasLoadedFromCloud) {
                     switchToLocalMode();
@@ -770,7 +819,6 @@ const firebaseConfig = {
                 renderLogs();
             }, (error) => {
                 console.error("Database read error:", error);
-                // Switch to Local Mode if permission denied or error
                 updateStatusUI('error');
                 switchToLocalMode();
             });
@@ -876,8 +924,39 @@ const firebaseConfig = {
         };
 
         window.translateText = async function() {
-            const input = document.getElementById('transInput').value.trim();
-            if (!input) return;
+    const input = document.getElementById('transInput').value.trim();
+    if (!input) return;
+
+    const btn = document.getElementById('translateBtn');
+    const resultBox = document.getElementById('transOutputBox');
+    const resultEl = document.getElementById('transResult');
+
+    btn.disabled = true;
+    btn.classList.add('opacity-75');
+    resultBox.classList.remove('hidden');
+    resultEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i> 翻譯中... / Menerjemahkan...';
+
+    // 判斷語言方向：印 ➔ 中 定係 中 ➔ 印
+    // MyMemory 代碼：印尼文係 'id'，繁體中文係 'zh-TW'
+    const langPair = isIndoToChinese ? 'id|zh-TW' : 'zh-TW|id';
+    const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=${langPair}`;
+
+    try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data && data.responseData && data.responseData.translatedText) {
+            resultEl.innerText = data.responseData.translatedText.trim();
+        } else {
+            resultEl.innerText = '翻譯失敗，請重試 / Gagal menerjemahkan.';
+        }
+    } catch (err) {
+        resultEl.innerText = '連線失敗或回應超時 / Error koneksi';
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75');
+    }
+};
 
             const btn = document.getElementById('translateBtn');
             const resultBox = document.getElementById('transOutputBox');
@@ -897,7 +976,7 @@ const firebaseConfig = {
                 systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
             try {
                 const response = await fetch(apiUrl, {
@@ -954,24 +1033,35 @@ const firebaseConfig = {
         window.openModal = function(id) {
             setCurrentTimes();
             if (id === 'diaperModal') {
-                toggleDiaperAmountUI();
+                toggleDiaperUI();
             }
             document.getElementById(id).classList.remove('hidden');
         };
 
-        window.toggleDiaperAmountUI = function() {
+        // 🌟 切換換片模組 UI (含大便顏色邏輯)
+        window.toggleDiaperUI = function() {
             const selectedType = document.querySelector('input[name="diaperType"]:checked')?.value || '';
             const isBoth = selectedType.includes('兩樣都有');
+            const isPoopOnly = selectedType.includes('大便');
             
             const singleSection = document.getElementById('singleAmountSection');
             const bothSection = document.getElementById('bothAmountSection');
+            const colorSection = document.getElementById('poopColorSection');
 
+            // 切換單一份量與分項份量
             if (isBoth) {
                 singleSection.classList.add('hidden');
                 bothSection.classList.remove('hidden');
             } else {
                 singleSection.classList.remove('hidden');
                 bothSection.classList.add('hidden');
+            }
+
+            // 大便或兩樣都有時，顯示顏色選擇
+            if (isBoth || isPoopOnly) {
+                colorSection.classList.remove('hidden');
+            } else {
+                colorSection.classList.add('hidden');
             }
         };
 
@@ -1005,6 +1095,7 @@ const firebaseConfig = {
             const time = document.getElementById('diaperTime').value;
             const type = document.querySelector('input[name="diaperType"]:checked').value;
             const isBoth = type.includes('兩樣都有');
+            const isPoopOnly = type.includes('大便');
             const note = document.getElementById('diaperNote').value.trim();
 
             let amountDetails = '';
@@ -1017,13 +1108,20 @@ const firebaseConfig = {
                 amountDetails = `份量: ${singleAmt}`;
             }
 
+            // 抓取顏色資訊
+            let colorDetail = '';
+            if (isBoth || isPoopOnly) {
+                const selectedColor = document.querySelector('input[name="poopColor"]:checked')?.value || '黃色 (Kuning)';
+                colorDetail = ` | 顏色: ${selectedColor}`;
+            }
+
             const item = {
                 date: document.getElementById('logDate').value,
                 id: Date.now(),
                 category: 'diaper',
                 time: time,
                 title: '換片 | Ganti Popok',
-                details: `${type} - ${amountDetails}`,
+                details: `${type} - ${amountDetails}${colorDetail}`,
                 note: note,
                 icon: 'fa-baby-carriage',
                 colorClass: 'bg-sky-100 text-sky-700 border-sky-300'
@@ -1277,4 +1375,3 @@ const firebaseConfig = {
     </script>
 </body>
 </html>
-
