@@ -660,10 +660,13 @@
 
         const CORRECT_PASSCODE = "2026";
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-baby-tracker-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "demo-key",
-            authDomain: "demo.firebaseapp.com",
-            projectId: "demo-project"
+        const firebaseConfig = {
+            apiKey: "AIzaSyAfGu86QjIRvtCwI86c6fEBk-y2vjIy2mw",
+            authDomain: "baby-tracker-199b2.firebaseapp.com",
+            projectId: "baby-tracker-199b2",
+            storageBucket: "baby-tracker-199b2.firebasestorage.app",
+            messagingSenderId: "1042532845387",
+            appId: "1:1042532845387:web:bd69e03f4c783d57b24ace"
         };
 
         let app, db, auth, currentUser = null;
@@ -683,7 +686,12 @@
         async function initAuth() {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (customTokenErr) {
+                        console.warn("Custom token auth failed, falling back to anonymous auth:", customTokenErr);
+                        await signInAnonymously(auth);
+                    }
                 } else {
                     await signInAnonymously(auth);
                 }
@@ -708,7 +716,7 @@
             }
         }
 
-        // Real-time listener for public cloud logs (Rule 1 & Rule 2 compliant)
+        // Real-time listener for public cloud logs
         function startFirestoreListener() {
             if (!currentUser || !db) return;
             const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'baby_logs');
