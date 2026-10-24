@@ -74,7 +74,7 @@
                     </h1>
                     <p class="text-xs text-amber-100 font-medium flex items-center gap-1.5">
                         <span>嬰兒照顧日誌</span>
-                        <span id="syncStatus" class="inline-flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full text-[10px]"><i class="fa-solid fa-cloud text-emerald-300"></i> 雲端同步中</span>
+                        <span id="syncStatus" class="inline-flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full text-[10px]"><i class="fa-solid fa-spinner fa-spin text-amber-200"></i> 連線中...</span>
                     </p>
                 </div>
                 <div class="flex items-center gap-1.5">
@@ -655,11 +655,10 @@
     <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const CORRECT_PASSCODE = "2026";
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-baby-tracker-app';
         const firebaseConfig = {
             apiKey: "AIzaSyAfGu86QjIRvtCwI86c6fEBk-y2vjIy2mw",
             authDomain: "baby-tracker-199b2.firebaseapp.com",
@@ -685,16 +684,7 @@
 
         async function initAuth() {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    try {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } catch (customTokenErr) {
-                        console.warn("Custom token auth failed, falling back to anonymous auth:", customTokenErr);
-                        await signInAnonymously(auth);
-                    }
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
                 currentUser = auth.currentUser;
                 if (currentUser) {
                     startFirestoreListener();
@@ -716,10 +706,10 @@
             }
         }
 
-        // Real-time listener for public cloud logs
+        // Direct real-time listener on global 'baby_logs' collection
         function startFirestoreListener() {
-            if (!currentUser || !db) return;
-            const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'baby_logs');
+            if (!db) return;
+            const logsRef = collection(db, 'baby_logs');
             
             onSnapshot(logsRef, (snapshot) => {
                 allCloudLogs = [];
@@ -739,12 +729,13 @@
 
         // Helper function to save logs to Firestore
         async function saveLogToCloud(item) {
-            if (!currentUser || !db) return;
+            if (!db) return;
             try {
-                const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'baby_logs');
+                const logsRef = collection(db, 'baby_logs');
                 await addDoc(logsRef, item);
             } catch (err) {
                 console.error("Error saving log to Firestore:", err);
+                showMsg('連線錯誤', '無法儲存至雲端，請檢查 Firebase Rules 設定。');
             }
         }
 
@@ -1089,9 +1080,9 @@
         };
 
         window.deleteLog = async function(docId) {
-            if (!currentUser || !db) return;
+            if (!db) return;
             try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'baby_logs', docId));
+                await deleteDoc(doc(db, 'baby_logs', docId));
             } catch (err) {
                 console.error("Error deleting log:", err);
             }
@@ -1107,7 +1098,7 @@
                 closeModal('confirmModal');
                 const logsToDelete = allCloudLogs.filter(l => l.date === selectedDate);
                 for (let l of logsToDelete) {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'baby_logs', l.docId));
+                    await deleteDoc(doc(db, 'baby_logs', l.docId));
                 }
             };
             document.getElementById('confirmModal').classList.remove('hidden');
@@ -1260,3 +1251,25 @@
     </script>
 </body>
 </html>
+```eof
+
+---
+
+### ⚠️ 重要步驟：你還需要去 Firebase 控制台設定權限
+
+即使更新了這個檔案，你還需要**允許匿名使用者存取你的 Firebase 資料庫**。請按照以下步驟完成設定：
+
+1. 開啟 [Firebase Console (主控台)](https://console.firebase.google.com/)。
+2. 進入你的專案 **`baby-tracker-199b2`**。
+3. 點選左側選單的 **Firestore Database** ➔ 上方的 **Rules (規則)** 頁籤。
+4. 將裡面的規則替換為以下內容（允許所有讀寫）：
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
