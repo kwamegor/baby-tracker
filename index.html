@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>嬰兒照顧日誌 | Jurnal Perawatan Bayi</title>
-    <!-- PWA / 全螢幕設定 -->
-    <link rel="manifest" data-inline="true" href='data:application/manifest+json;charset=utf-8,{
+    
+    <!-- 📱 PWA / 手機全螢幕 (Standalone) 設定 -->
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{
       "name": "嬰兒照顧日誌 | Baby Tracker",
       "short_name": "Baby Tracker",
       "start_url": "./index.html",
@@ -13,9 +14,11 @@
       "background_color": "%23fffbeb",
       "theme_color": "%23f59e0b"
     }'>
-    <!-- 針對 iOS Safari 嘅全螢幕支援 -->
+    <!-- iOS Safari 全螢幕及狀態列支援 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Baby Tracker">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -58,7 +61,7 @@
                 <p class="text-xs text-slate-500">Masukkan Kata Sandi untuk Masuk</p>
             </div>
 
-            <form id="authForm" class="space-y-4">
+            <form id="authForm" onsubmit="handleAuthSubmit(event); return false;" class="space-y-4">
                 <div>
                     <input type="password" id="passcodeInput" maxlength="6" inputmode="numeric" placeholder="••••" required autofocus
                            class="w-full text-center text-2xl tracking-[0.5em] font-bold py-3 bg-slate-100 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-amber-400 focus:bg-white outline-none transition">
@@ -92,10 +95,10 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <button onclick="lockApp()" title="鎖定頁面" class="text-xs bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 rounded-full font-medium transition">
+                    <button type="button" onclick="lockApp()" title="鎖定頁面" class="text-xs bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 rounded-full font-medium transition">
                         <i class="fa-solid fa-lock"></i>
                     </button>
-                    <button onclick="confirmClearDayLogs()" class="text-xs bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-3 py-1.5 rounded-full font-medium transition">
+                    <button type="button" onclick="confirmClearDayLogs()" class="text-xs bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-3 py-1.5 rounded-full font-medium transition">
                         <i class="fa-solid fa-trash-can mr-1"></i>清空 | Hapus
                     </button>
                 </div>
@@ -155,7 +158,7 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="openModal('milkModal')" class="bg-gradient-to-br from-amber-400 to-amber-500 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
+                    <button type="button" onclick="openModal('milkModal')" class="bg-gradient-to-br from-amber-400 to-amber-500 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
                         <i class="fa-solid fa-bottle-droplet text-3xl"></i>
                         <div class="text-center">
                             <span class="font-bold text-sm block">紀錄餵奶</span>
@@ -163,7 +166,7 @@
                         </div>
                     </button>
 
-                    <button onclick="openModal('diaperModal')" class="bg-gradient-to-br from-sky-400 to-sky-500 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
+                    <button type="button" onclick="openModal('diaperModal')" class="bg-gradient-to-br from-sky-400 to-sky-500 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
                         <i class="fa-solid fa-baby-carriage text-3xl"></i>
                         <div class="text-center">
                             <span class="font-bold text-sm block">紀錄換片</span>
@@ -171,7 +174,7 @@
                         </div>
                     </button>
 
-                    <button onclick="openModal('sleepModal')" class="bg-gradient-to-br from-indigo-400 to-indigo-500 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
+                    <button type="button" onclick="openModal('sleepModal')" class="bg-gradient-to-br from-indigo-400 to-indigo-500 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
                         <i class="fa-solid fa-moon text-3xl"></i>
                         <div class="text-center">
                             <span class="font-bold text-sm block">紀錄睡眠</span>
@@ -179,7 +182,7 @@
                         </div>
                     </button>
 
-                    <button onclick="openModal('otherModal')" class="bg-gradient-to-br from-emerald-400 to-emerald-500 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
+                    <button type="button" onclick="openModal('otherModal')" class="bg-gradient-to-br from-emerald-400 to-emerald-500 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 btn-active transition">
                         <i class="fa-solid fa-notes-medical text-3xl"></i>
                         <div class="text-center">
                             <span class="font-bold text-sm block">其他紀錄</span>
@@ -188,7 +191,7 @@
                     </button>
                 </div>
 
-                <button onclick="generateSummary()" class="w-full bg-gradient-to-r from-rose-400 via-amber-400 to-amber-500 text-white font-bold py-3.5 px-4 rounded-2xl shadow-md transition btn-active flex items-center justify-center gap-2">
+                <button type="button" onclick="generateSummary()" class="w-full bg-gradient-to-r from-rose-400 via-amber-400 to-amber-500 text-white font-bold py-3.5 px-4 rounded-2xl shadow-md transition btn-active flex items-center justify-center gap-2">
                     <i class="fa-solid fa-file-invoice text-lg"></i>
                     <span>產生每日總結圖卡 | Ringkasan Harian</span>
                 </button>
@@ -201,62 +204,158 @@
                 </div>
             </div>
 
-            <!-- TAB 2: Instant Translator Page -->
-            <div id="pageTranslator" class="hidden space-y-4">
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
-                    <div class="flex justify-between items-center bg-indigo-50 p-3 rounded-xl border border-indigo-100">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-language text-indigo-600 text-xl"></i>
-                            <span id="transDirText" class="font-bold text-sm text-indigo-900">印 ➔ 中 (Indo ➔ 中文)</span>
+            <!-- TAB 2: Work Schedule & Daily Housework Checklist Page -->
+            <div id="pageSchedule" class="hidden space-y-4">
+                <!-- Daily Housework Checklist Card (Synced with Cloud) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex justify-between items-center border-b pb-2.5 border-slate-100">
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-clipboard-check text-emerald-500"></i> 每日家務清單
+                            </h2>
+                            <p class="text-[11px] text-slate-500">Daftar Tugas Rumah Harian (自動同步)</p>
                         </div>
-                        <button onclick="toggleTranslationDirection()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow transition btn-active flex items-center gap-1">
-                            <i class="fa-solid fa-arrow-rotate-left"></i> 切換 Direction
-                        </button>
+                        <span id="checklistProgress" class="text-xs font-black bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full">
+                            0 / 13
+                        </span>
                     </div>
 
-                    <div>
-                        <label id="transInputLabel" class="block text-xs font-bold text-slate-600 mb-1">輸入印尼文 (可夾雜英文)：</label>
-                        <textarea id="transInput" rows="3" placeholder="Tulis teks di sini... ( boleh mix English / 中文 )" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:bg-white transition"></textarea>
-                    </div>
-
-                    <button id="translateBtn" onclick="translateText()" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-3 rounded-xl shadow-md hover:from-indigo-600 hover:to-purple-700 transition btn-active flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> 即時翻譯 | Terjemahkan
-                    </button>
-
-                    <div id="transOutputBox" class="hidden bg-slate-900 text-white p-4 rounded-xl space-y-3 relative">
-                        <div class="text-xs text-amber-300 font-medium">翻譯結果 | Hasil Terjemahan:</div>
-                        <p id="transResult" class="text-base font-medium leading-relaxed"></p>
-
-                        <div class="pt-2 border-t border-slate-800">
-                            <button onclick="copyTranslation()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow transition btn-active">
-                                <i class="fa-regular fa-copy text-base"></i> 複製結果 | Salin Hasil
+                    <!-- Checklist Date Picker -->
+                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <span class="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                            <i class="fa-regular fa-calendar text-emerald-600"></i> 檢視/勾選日期：
+                        </span>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="changeChecklistDate(-1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 flex items-center justify-center text-xs transition btn-active">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <input type="date" id="checklistDate" onchange="renderHouseworkChecklist()" class="bg-white border border-slate-200 text-slate-800 text-xs font-bold px-2 py-1 rounded-lg focus:ring-2 focus:ring-emerald-400">
+                            <button type="button" onclick="changeChecklistDate(1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 flex items-center justify-center text-xs transition btn-active">
+                                <i class="fa-solid fa-chevron-right"></i>
                             </button>
                         </div>
                     </div>
+
+                    <!-- 9 Housework Items Grid -->
+                    <div id="houseworkChecklistContainer" class="grid grid-cols-1 gap-2 pt-1"></div>
                 </div>
 
+                <!-- Daily Work Schedule Card -->
                 <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-regular fa-comments text-amber-500"></i> 常用育兒短語 | Frasa Umum
-                    </h3>
-                    <div class="grid grid-cols-1 gap-2">
-                        <button onclick="useQuickPhrase('BB 已經飲完奶了。', 'Bayi sudah selesai minum susu.')" class="p-2.5 text-left bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 transition flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-700">BB 已經飲完奶了。</span>
-                            <span class="text-slate-400 font-normal italic">Bayi sudah selesai minum susu.</span>
-                        </button>
-                        <button onclick="useQuickPhrase('BB 換咗尿片，大便咗。', 'Bayi sudah ganti popok, ada pup.')" class="p-2.5 text-left bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 transition flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-700">BB 換咗尿片，大便咗。</span>
-                            <span class="text-slate-400 font-normal italic">Bayi sudah ganti popok, ada pup.</span>
-                        </button>
-                        <button onclick="useQuickPhrase('BB 剛剛睡著了。', 'Bayi baru saja tidur.')" class="p-2.5 text-left bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 transition flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-700">BB 剛剛睡著了。</span>
-                            <span class="text-slate-400 font-normal italic">Bayi baru saja tidur.</span>
-                        </button>
-                        <button onclick="useQuickPhrase('BB 體溫正常。', 'Suhu badan bayi normal.')" class="p-2.5 text-left bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 transition flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-700">BB 體溫正常。</span>
-                            <span class="text-slate-400 font-normal italic">Suhu badan bayi normal.</span>
-                        </button>
+                    <div class="border-b pb-2.5 border-slate-100">
+                        <h2 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-clock text-amber-500"></i> 每日工作時間表
+                        </h2>
+                        <p class="text-[11px] text-slate-500">Jadwal Kerja Harian</p>
                     </div>
+
+                    <div class="space-y-3">
+                        <!-- 5:30 -->
+                        <div class="bg-amber-50/70 border border-amber-200/70 rounded-xl p-3.5 space-y-1.5">
+                            <div class="inline-flex items-center gap-1.5 bg-amber-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg">
+                                <i class="fa-regular fa-sun"></i> 5：30
+                            </div>
+                            <p class="text-sm font-medium text-slate-800 leading-relaxed">
+                                起床，炒蔬菜準備太太的午餐飯盒和你自己的午餐，做平時要做的家務，例如洗水箱，煲水等等。
+                            </p>
+                            <p class="text-xs text-slate-500 leading-relaxed border-t border-amber-200/50 pt-1.5">
+                                Bangun tidur, tumis sayur untuk bekal makan siang Nyonya dan makan siang kamu sendiri, kerjakan pekerjaan rumah rutin seperti cuci tangki air, masak air, dll.
+                            </p>
+                        </div>
+
+                        <!-- 7:00 - 10:00 -->
+                        <div class="bg-sky-50/70 border border-sky-200/70 rounded-xl p-3.5 space-y-1.5">
+                            <div class="inline-flex items-center gap-1.5 bg-sky-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg">
+                                <i class="fa-regular fa-clock"></i> 7：00 - 10：00
+                            </div>
+                            <p class="text-sm font-medium text-slate-800 leading-relaxed">
+                                換尿片，餵第一餐奶，掃風，豎抱BB15-20分鐘，和BB玩一陣，哄BB睡覺。BB睡着了，你可以做家務，但是必須3-5分鐘就去看看BB （例如確認BB有沒有翻身，有沒有被被子蓋著臉）。
+                            </p>
+                            <p class="text-xs text-slate-500 leading-relaxed border-t border-sky-200/50 pt-1.5">
+                                Ganti popok, kasih susu ke-1, sendawakan, gendong tegak bayi 15-20 menit, ajak main sebentar, tidurkan bayi. Saat bayi tidur, kamu bisa kerjakan pekerjaan rumah, tapi WAJIB cek bayi setiap 3-5 menit (pastikan bayi tidak tengkurap atau wajah tertutup selimut).
+                            </p>
+                        </div>
+
+                        <!-- 10:00 - 13:00 -->
+                        <div class="bg-emerald-50/70 border border-emerald-200/70 rounded-xl p-3.5 space-y-1.5">
+                            <div class="inline-flex items-center gap-1.5 bg-emerald-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg">
+                                <i class="fa-regular fa-clock"></i> 10：00 - 13：00
+                            </div>
+                            <p class="text-sm font-medium text-slate-800 leading-relaxed">
+                                換尿片，餵第二餐奶，掃風，豎抱BB15-20分鐘，和BB玩一陣，哄BB睡覺。 BB睡着了，你可以在廳里吃飯，做家務等。但是必須3-5分鐘就去看看BB。
+                            </p>
+                            <p class="text-xs text-slate-500 leading-relaxed border-t border-emerald-200/50 pt-1.5">
+                                Ganti popok, kasih susu ke-2, sendawakan, gendong tegak bayi 15-20 menit, ajak main sebentar, tidurkan bayi. Saat bayi tidur, kamu bisa makan di ruang tamu, kerjakan pekerjaan rumah, dll. Tapi WAJIB cek bayi setiap 3-5 menit.
+                            </p>
+                        </div>
+
+                        <!-- 13:00 - 16:00 -->
+                        <div class="bg-indigo-50/70 border border-indigo-200/70 rounded-xl p-3.5 space-y-1.5">
+                            <div class="inline-flex items-center gap-1.5 bg-indigo-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg">
+                                <i class="fa-regular fa-clock"></i> 13：00 - 16：00
+                            </div>
+                            <p class="text-sm font-medium text-slate-800 leading-relaxed">
+                                換尿片，餵第三餐奶，掃風，豎抱BB15-20分鐘，陪BB玩，哄BB睡覺。BB睡着了，你可以繼續做未做完的家務等等。但是必須3-5分鐘就去看看BB 。
+                            </p>
+                            <p class="text-xs text-slate-500 leading-relaxed border-t border-indigo-200/50 pt-1.5">
+                                Ganti popok, kasih susu ke-3, sendawakan, gendong tegak bayi 15-20 menit, temani main, tidurkan bayi. Saat bayi tidur, lanjutkan pekerjaan rumah yang belum selesai, dll. Tapi WAJIB cek bayi setiap 3-5 menit.
+                            </p>
+                        </div>
+
+                        <!-- 16:00 - 19:30 -->
+                        <div class="bg-orange-50/70 border border-orange-200/70 rounded-xl p-3.5 space-y-1.5">
+                            <div class="inline-flex items-center gap-1.5 bg-orange-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg">
+                                <i class="fa-regular fa-clock"></i> 16：00 - 19：30
+                            </div>
+                            <p class="text-sm font-medium text-slate-800 leading-relaxed">
+                                換尿片，餵第4餐奶，掃風，豎抱BB15-20分鐘，和BB玩，哄BB睡覺。BB睡着了你可以準備晚餐食材。但是必須3-5分鐘就去看看BB 。
+                            </p>
+                            <p class="text-xs text-slate-500 leading-relaxed border-t border-orange-200/50 pt-1.5">
+                                Ganti popok, kasih susu ke-4, sendawakan, gendong tegak bayi 15-20 menit, ajak main, tidurkan bayi. Saat bayi tidur, kamu bisa siapkan bahan makan malam. Tapi WAJIB cek bayi setiap 3-5 menit.
+                            </p>
+                        </div>
+
+                        <!-- 19:30 之後 -->
+                        <div class="bg-rose-50/70 border border-rose-200/70 rounded-xl p-3.5 space-y-1.5">
+                            <div class="inline-flex items-center gap-1.5 bg-rose-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg">
+                                <i class="fa-solid fa-moon"></i> 19：30 之後
+                            </div>
+                            <p class="text-sm font-medium text-slate-800 leading-relaxed">
+                                先生或者太太回來，你可以做晚飯和明天太太和你自己的午餐。還有其他的家務，洗自己的衣服。
+                            </p>
+                            <p class="text-xs text-slate-500 leading-relaxed border-t border-rose-200/50 pt-1.5">
+                                Setelah 19:30: Tuan atau Nyonya pulang, kamu bisa masak makan malam serta makan siang Nyonya dan kamu untuk besok. Juga pekerjaan rumah lainnya, dan cuci baju kamu sendiri.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: Baby Care Rules Page -->
+            <div id="pageRules" class="hidden space-y-4">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 border-slate-100">
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-shield-heart text-rose-500"></i> 照顧 BB 注意事項
+                            </h2>
+                            <p class="text-[11px] text-slate-500">Aturan Penting Perawatan Bayi (Pilih Bahasa / 選擇語言)</p>
+                        </div>
+
+                        <!-- Language Mode Switcher: 印中對照 vs 印英對照 -->
+                        <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl border border-slate-200/70 shrink-0">
+                            <button type="button" id="btnLangIndoZh" onclick="setRulesLanguage('indo-zh')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500 text-white shadow-sm transition leading-tight text-center">
+                                <span class="block">印中對照</span>
+                                <span class="block text-[10px] font-normal opacity-90">Indo - Mandarin</span>
+                            </button>
+                            <button type="button" id="btnLangIndoEn" onclick="setRulesLanguage('indo-en')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-800 transition leading-tight text-center">
+                                <span class="block">印英對照</span>
+                                <span class="block text-[10px] font-normal opacity-80">Indo - English</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="careRulesContainer" class="space-y-3"></div>
                 </div>
             </div>
 
@@ -265,16 +364,22 @@
         <!-- Bottom Navigation Bar -->
         <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 shadow-lg">
             <div class="max-w-md mx-auto flex justify-around items-center h-16">
-                <button id="navBtnCare" onclick="switchTab('care')" class="flex-1 flex flex-col items-center justify-center h-full text-amber-600 font-bold transition">
+                <button type="button" id="navBtnCare" onclick="switchTab('care')" class="flex-1 flex flex-col items-center justify-center h-full text-amber-600 font-bold transition">
                     <i class="fa-solid fa-baby-carriage text-lg"></i>
                     <span class="text-[11px] mt-0.5 leading-tight">照顧日誌</span>
                     <span class="text-[9px] font-normal opacity-80 leading-none">Catatan</span>
                 </button>
                 <div class="w-px h-8 bg-slate-200"></div>
-                <button id="navBtnTrans" onclick="switchTab('trans')" class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition">
-                    <i class="fa-solid fa-language text-lg"></i>
-                    <span class="text-[11px] mt-0.5 leading-tight">即時翻譯</span>
-                    <span class="text-[9px] font-normal opacity-80 leading-none">Penerjemah</span>
+                <button type="button" id="navBtnSchedule" onclick="switchTab('schedule')" class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition">
+                    <i class="fa-solid fa-clipboard-list text-lg"></i>
+                    <span class="text-[11px] mt-0.5 leading-tight">工作時間</span>
+                    <span class="text-[9px] font-normal opacity-80 leading-none">Jadwal</span>
+                </button>
+                <div class="w-px h-8 bg-slate-200"></div>
+                <button type="button" id="navBtnRules" onclick="switchTab('rules')" class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition">
+                    <i class="fa-solid fa-shield-heart text-lg"></i>
+                    <span class="text-[11px] mt-0.5 leading-tight">照顧事項</span>
+                    <span class="text-[9px] font-normal opacity-80 leading-none">Aturan</span>
                 </button>
             </div>
         </nav>
@@ -288,7 +393,7 @@
             </div>
             <h3 id="msgModalTitle" class="font-bold text-slate-800 text-base">提示 | Perhatian</h3>
             <p id="msgModalText" class="text-xs text-slate-600 leading-relaxed"></p>
-            <button onclick="closeModal('messageModal')" class="w-full bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition btn-active">
+            <button type="button" onclick="closeModal('messageModal')" class="w-full bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition btn-active">
                 確定 | OK
             </button>
         </div>
@@ -302,10 +407,10 @@
             <h3 id="confirmTitle" class="font-bold text-slate-800 text-base">確認操作 | Konfirmasi</h3>
             <p id="confirmText" class="text-xs text-slate-600 leading-relaxed"></p>
             <div class="grid grid-cols-2 gap-2 pt-1">
-                <button onclick="closeModal('confirmModal')" class="bg-slate-100 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition">
+                <button type="button" onclick="closeModal('confirmModal')" class="bg-slate-100 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition">
                     取消 | Batal
                 </button>
-                <button id="confirmYesBtn" class="bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs transition btn-active">
+                <button type="button" id="confirmYesBtn" class="bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs transition btn-active">
                     確定 | Ya
                 </button>
             </div>
@@ -319,7 +424,7 @@
                 <h3 class="font-bold text-lg text-amber-800 flex items-center gap-2">
                     <i class="fa-solid fa-bottle-droplet text-amber-500"></i> 紀錄餵奶 | Catat Minum Susu
                 </h3>
-                <button onclick="closeModal('milkModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
+                <button type="button" onclick="closeModal('milkModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
             </div>
 
             <form onsubmit="saveMilkLog(event)" class="space-y-4">
@@ -378,7 +483,7 @@
                 <h3 class="font-bold text-lg text-sky-800 flex items-center gap-2">
                     <i class="fa-solid fa-baby-carriage text-sky-500"></i> 紀錄換片 | Catat Ganti Popok
                 </h3>
-                <button onclick="closeModal('diaperModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
+                <button type="button" onclick="closeModal('diaperModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
             </div>
 
             <form onsubmit="saveDiaperLog(event)" class="space-y-4">
@@ -497,7 +602,7 @@
                     </div>
                 </div>
 
-                <!-- 🌟 大便顏色選擇區塊 (Poop Color Selection) -->
+                <!-- 大便顏色選擇區塊 (Poop Color Selection) -->
                 <div id="poopColorSection" class="hidden space-y-2 p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60">
                     <label class="block text-xs font-bold text-amber-900 flex items-center gap-1">
                         <i class="fa-solid fa-palette text-amber-600"></i> 大便顏色 | Warna Pup
@@ -564,7 +669,7 @@
                 <h3 class="font-bold text-lg text-indigo-800 flex items-center gap-2">
                     <i class="fa-solid fa-moon text-indigo-500"></i> 紀錄睡眠 | Catat Tidur
                 </h3>
-                <button onclick="closeModal('sleepModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
+                <button type="button" onclick="closeModal('sleepModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
             </div>
 
             <form onsubmit="saveSleepLog(event)" class="space-y-4">
@@ -598,7 +703,7 @@
                 <h3 class="font-bold text-lg text-emerald-800 flex items-center gap-2">
                     <i class="fa-solid fa-notes-medical text-emerald-500"></i> 其他紀錄 | Catatan Lain
                 </h3>
-                <button onclick="closeModal('otherModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
+                <button type="button" onclick="closeModal('otherModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
             </div>
 
             <form onsubmit="saveOtherLog(event)" class="space-y-4">
@@ -636,7 +741,7 @@
                 <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-image text-rose-500"></i> 每日總結預覽 | Ringkasan
                 </h3>
-                <button onclick="closeModal('summaryModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
+                <button type="button" onclick="closeModal('summaryModal')" class="text-slate-400 text-xl font-bold px-2">&times;</button>
             </div>
 
             <div class="overflow-x-auto">
@@ -677,79 +782,15 @@
                 </div>
             </div>
 
-            <button id="downloadBtn" onclick="exportSummaryImage()" class="w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-md transition btn-active flex items-center justify-center gap-2">
+            <button type="button" id="downloadBtn" onclick="exportSummaryImage()" class="w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-md transition btn-active flex items-center justify-center gap-2">
                 <i class="fa-solid fa-download"></i> <span>下載為圖片 | Unduh Gambar</span>
             </button>
         </div>
     </div>
 
-    <!-- JavaScript Base Functions -->
+    <!-- Synchronous Core Application Script (Guarantees all UI functions are defined immediately) -->
     <script>
         const CORRECT_PASSCODE = "2026";
-
-        function unlockApp() {
-            document.getElementById('authOverlay').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            if (window.setCurrentTimes) window.setCurrentTimes();
-            if (window.renderLogs) window.renderLogs();
-        }
-
-        function lockApp() {
-            sessionStorage.removeItem('baby_tracker_authenticated');
-            document.getElementById('mainApp').classList.add('hidden');
-            document.getElementById('authOverlay').classList.remove('hidden');
-            document.getElementById('passcodeInput').value = '';
-            document.getElementById('authErrorMsg').classList.add('hidden');
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const authForm = document.getElementById('authForm');
-            if (authForm) {
-                authForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const input = document.getElementById('passcodeInput');
-                    const errorMsg = document.getElementById('authErrorMsg');
-                    const authCard = document.getElementById('authCard');
-
-                    if (input.value.trim() === CORRECT_PASSCODE) {
-                        sessionStorage.setItem('baby_tracker_authenticated', 'true');
-                        unlockApp();
-                    } else {
-                        errorMsg.classList.remove('hidden');
-                        authCard.classList.remove('animate-shake');
-                        void authCard.offsetWidth;
-                        authCard.classList.add('animate-shake');
-                        input.value = '';
-                        input.focus();
-                    }
-                });
-            }
-
-            if (sessionStorage.getItem('baby_tracker_authenticated') === 'true') {
-                unlockApp();
-            }
-        });
-    </script>
-
-    <!-- Firebase SDK Imports & Main Logic -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getDatabase, ref, push, remove, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAfGu86QjIRvtCwI86c6fEBk-y2vjIy2mw",
-            authDomain: "baby-tracker-199b2.firebaseapp.com",
-            databaseURL: "https://baby-tracker-199b2-default-rtdb.firebaseio.com",
-            projectId: "baby-tracker-199b2",
-            storageBucket: "baby-tracker-199b2.firebasestorage.app",
-            messagingSenderId: "1042532845387",
-            appId: "1:1042532845387:web:bd69e03f4c783d57b24ace"
-        };
-
-        let app, db;
-        let allCloudLogs = [];
-        let isUsingLocalStorage = false;
-        let hasLoadedFromCloud = false;
 
         function getLocalLogs() {
             try {
@@ -767,7 +808,28 @@
             }
         }
 
-        function updateStatusUI(type) {
+        function getLocalChecklist() {
+            try {
+                return JSON.parse(localStorage.getItem('local_housework_checklist') || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveLocalChecklist(data) {
+            try {
+                localStorage.setItem('local_housework_checklist', JSON.stringify(data));
+            } catch (e) {
+                console.error("Failed to save local checklist", e);
+            }
+        }
+
+        window.allCloudLogs = getLocalLogs();
+        window.cloudChecklistData = getLocalChecklist();
+        window.isUsingLocalStorage = true;
+        window.firebaseBridge = null;
+
+        window.updateStatusUI = function(type) {
             const statusEl = document.getElementById('syncStatus');
             if (!statusEl) return;
             if (type === 'online') {
@@ -780,234 +842,388 @@
                 statusEl.className = "inline-flex items-center gap-1 bg-rose-500/30 text-rose-100 px-2 py-0.5 rounded-full text-[10px]";
                 statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-200"></i> 資料庫權限拒絕';
             }
-        }
-
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getDatabase(app);
-            
-            setTimeout(() => {
-                if (!hasLoadedFromCloud) {
-                    switchToLocalMode();
-                }
-            }, 6000);
-
-            startDatabaseListener();
-        } catch (e) {
-            console.error("Firebase init error:", e);
-            switchToLocalMode();
-        }
-
-        function switchToLocalMode() {
-            isUsingLocalStorage = true;
-            allCloudLogs = getLocalLogs();
-            updateStatusUI('local');
-            renderLogs();
-        }
-
-        function startDatabaseListener() {
-            if (!db) {
-                switchToLocalMode();
-                return;
-            }
-            const logsRef = ref(db, 'baby_logs');
-            
-            onValue(logsRef, (snapshot) => {
-                hasLoadedFromCloud = true;
-                allCloudLogs = [];
-                const data = snapshot.val();
-                if (data) {
-                    Object.keys(data).forEach((key) => {
-                        allCloudLogs.push({
-                            dbKey: key,
-                            ...data[key]
-                        });
-                    });
-                }
-                isUsingLocalStorage = false;
-                updateStatusUI('online');
-                renderLogs();
-            }, (error) => {
-                console.error("Database read error:", error);
-                updateStatusUI('error');
-                switchToLocalMode();
-            });
-        }
-
-        async function saveLogToCloud(item) {
-            if (isUsingLocalStorage || !db) {
-                const localItem = { dbKey: 'local_' + Date.now(), ...item };
-                allCloudLogs.push(localItem);
-                saveLocalLogs(allCloudLogs);
-                renderLogs();
-                return;
-            }
-
-            try {
-                const logsRef = ref(db, 'baby_logs');
-                await push(logsRef, item);
-            } catch (err) {
-                console.error("Error saving log:", err);
-                const localItem = { dbKey: 'local_' + Date.now(), ...item };
-                allCloudLogs.push(localItem);
-                saveLocalLogs(allCloudLogs);
-                renderLogs();
-                showMsg('連線提示', '無法儲存至雲端，已為您儲存在本地紀錄！');
-            }
-        }
-
-        const logDateElem = document.getElementById('logDate');
-        if (logDateElem) {
-            logDateElem.value = new Date().toISOString().split('T')[0];
-        }
-
-        window.changeDate = function(offsetDays) {
-            const dateInput = document.getElementById('logDate');
-            if (!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
-            
-            const current = new Date(dateInput.value);
-            current.setDate(current.getDate() + offsetDays);
-            
-            dateInput.value = current.toISOString().split('T')[0];
-            renderLogs();
         };
 
-        window.setDateToOffset = function(offsetDays) {
+        // Initialize default dates
+        const todayIso = new Date().toISOString().split('T')[0];
+        const logDateElem = document.getElementById('logDate');
+        if (logDateElem) logDateElem.value = todayIso;
+        const checklistDateElem = document.getElementById('checklistDate');
+        if (checklistDateElem) checklistDateElem.value = todayIso;
+
+        // ==========================================
+        // Authentication Functions
+        // ==========================================
+        function unlockApp() {
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            setCurrentTimes();
+            renderLogs();
+            renderHouseworkChecklist();
+            renderCareRules();
+        }
+
+        function lockApp() {
+            sessionStorage.removeItem('baby_tracker_authenticated');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('authOverlay').classList.remove('hidden');
+            document.getElementById('passcodeInput').value = '';
+            document.getElementById('authErrorMsg').classList.add('hidden');
+        }
+
+        // ==========================================
+        // Tab Switching Function
+        // ==========================================
+        function switchTab(tab) {
+            const pageCare = document.getElementById('pageCareLog');
+            const pageSchedule = document.getElementById('pageSchedule');
+            const pageRules = document.getElementById('pageRules');
+
+            const btnCare = document.getElementById('navBtnCare');
+            const btnSchedule = document.getElementById('navBtnSchedule');
+            const btnRules = document.getElementById('navBtnRules');
+
+            if (pageCare) pageCare.classList.add('hidden');
+            if (pageSchedule) pageSchedule.classList.add('hidden');
+            if (pageRules) pageRules.classList.add('hidden');
+
+            if (btnCare) btnCare.className = "flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition";
+            if (btnSchedule) btnSchedule.className = "flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition";
+            if (btnRules) btnRules.className = "flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition";
+
+            if (tab === 'care') {
+                if (pageCare) pageCare.classList.remove('hidden');
+                if (btnCare) btnCare.className = "flex-1 flex flex-col items-center justify-center h-full text-amber-600 font-bold transition";
+            } else if (tab === 'schedule') {
+                if (pageSchedule) pageSchedule.classList.remove('hidden');
+                if (btnSchedule) btnSchedule.className = "flex-1 flex flex-col items-center justify-center h-full text-emerald-600 font-bold transition";
+                renderHouseworkChecklist();
+            } else if (tab === 'rules') {
+                if (pageRules) pageRules.classList.remove('hidden');
+                if (btnRules) btnRules.className = "flex-1 flex flex-col items-center justify-center h-full text-rose-600 font-bold transition";
+                renderCareRules();
+            }
+        }
+
+        // ==========================================
+        // Date Navigation Functions
+        // ==========================================
+        function changeDate(offsetDays) {
+            const dateInput = document.getElementById('logDate');
+            if (!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+            const current = new Date(dateInput.value);
+            current.setDate(current.getDate() + offsetDays);
+            dateInput.value = current.toISOString().split('T')[0];
+            renderLogs();
+        }
+
+        function setDateToOffset(offsetDays) {
             const target = new Date();
             target.setDate(target.getDate() + offsetDays);
             document.getElementById('logDate').value = target.toISOString().split('T')[0];
             renderLogs();
-        };
+        }
 
-        window.switchTab = function(tab) {
-            const pageCare = document.getElementById('pageCareLog');
-            const pageTrans = document.getElementById('pageTranslator');
-            const btnCare = document.getElementById('navBtnCare');
-            const btnTrans = document.getElementById('navBtnTrans');
+        function changeChecklistDate(offsetDays) {
+            const dateInput = document.getElementById('checklistDate');
+            if (!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+            const current = new Date(dateInput.value);
+            current.setDate(current.getDate() + offsetDays);
+            dateInput.value = current.toISOString().split('T')[0];
+            renderHouseworkChecklist();
+        }
 
-            if (tab === 'care') {
-                pageCare.classList.remove('hidden');
-                pageTrans.classList.add('hidden');
-                btnCare.className = "flex-1 flex flex-col items-center justify-center h-full text-amber-600 font-bold transition";
-                btnTrans.className = "flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition";
-            } else if (tab === 'trans') {
-                pageCare.classList.add('hidden');
-                pageTrans.classList.remove('hidden');
-                btnTrans.className = "flex-1 flex flex-col items-center justify-center h-full text-indigo-600 font-bold transition";
-                btnCare.className = "flex-1 flex flex-col items-center justify-center h-full text-slate-400 font-medium transition";
+        // ==========================================
+        // TAB 2: Daily Housework Checklist Logic
+        // ==========================================
+        const HOUSEWORK_ITEMS = [
+            { id: 'clean_water_tank', zh: '早上清洗水箱', indo: 'Cuci tangki air (pagi)', icon: 'fa-faucet-drip' },
+            { id: 'wash_cups', zh: '洗杯', indo: 'Cuci gelas', icon: 'fa-mug-saucer' },
+            { id: 'boil_water', zh: '煲水', indo: 'Masak air', icon: 'fa-fire-burner' },
+            { id: 'wash_clothes', zh: '洗衣服', indo: 'Cuci baju', icon: 'fa-shirt' },
+            { id: 'wash_baby_clothes', zh: '清洗BB衣服', indo: 'Cuci baju bayi', icon: 'fa-baby' },
+            {
+                id: 'wash_underwear',
+                zh: '洗內衣褲',
+                indo: 'Cuci pakaian dalam',
+                svg: '<path d="M3 5h18v3H3V5zm0 4h18v2.5c-3.8.8-6.2 3.8-6.8 7.5H9.8C9.2 15.3 6.8 12.3 3 11.5V9z"/>'
+            },
+            { id: 'wash_towels', zh: '洗毛巾', indo: 'Cuci handuk', icon: 'fa-rug' },
+            {
+                id: 'iron_clothes',
+                zh: '熨衣服',
+                indo: 'Setrika baju',
+                svg: '<path d="M21 17H3v2h18v-2zm-1.2-1.5L16.3 8.6C15.9 7.6 14.9 7 13.8 7H6v2h7.8c.4 0 .7.2.9.6l.7 1.4H5.2L3.5 15.5h16.3z"/>'
+            },
+            { id: 'clean_toilet', zh: '清潔廁所', indo: 'Bersihkan toilet', icon: 'fa-toilet' },
+            { id: 'clean_kitchen', zh: '清潔廚房', indo: 'Bersihkan dapur', icon: 'fa-kitchen-set' },
+            { id: 'clean_house', zh: '清潔全屋', indo: 'Bersihkan seluruh rumah', icon: 'fa-broom' },
+            { id: 'wipe_windows', zh: '抹窗', indo: 'Lap jendela', icon: 'fa-window-maximize' },
+            { id: 'curtains', zh: '洗熨窗簾', indo: 'Cuci & setrika tirai', icon: 'fa-scroll' }
+        ];
+
+        function renderHouseworkChecklist() {
+            const container = document.getElementById('houseworkChecklistContainer');
+            const progressEl = document.getElementById('checklistProgress');
+            const dateInput = document.getElementById('checklistDate');
+            if (!container || !dateInput) return;
+
+            const selectedDate = dateInput.value || new Date().toISOString().split('T')[0];
+            const dayRecord = (window.cloudChecklistData && window.cloudChecklistData[selectedDate]) || {};
+
+            let completedCount = 0;
+            container.innerHTML = '';
+
+            HOUSEWORK_ITEMS.forEach(item => {
+                const entry = dayRecord[item.id];
+                const isChecked = !!(entry && entry.done);
+                if (isChecked) completedCount++;
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => toggleHouseworkItem(item.id);
+                btn.className = isChecked
+                    ? 'w-full flex items-center justify-between p-3 rounded-xl border border-emerald-300 bg-emerald-50/90 text-left transition btn-active'
+                    : 'w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-100/70 text-left transition btn-active';
+
+                const iconHtml = item.svg
+                    ? `<svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 ${isChecked ? 'text-emerald-500' : 'text-slate-300'}">${item.svg}</svg>`
+                    : `<i class="fa-solid ${item.icon} text-sm ${isChecked ? 'text-emerald-500' : 'text-slate-300'}"></i>`;
+
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-lg flex items-center justify-center border transition ${isChecked ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-300 text-transparent'}">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm font-bold block ${isChecked ? 'text-emerald-900 line-through decoration-emerald-500/70' : 'text-slate-800'}">${item.zh}</span>
+                            <span class="text-[11px] block ${isChecked ? 'text-emerald-700' : 'text-slate-500'}">${item.indo}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${iconHtml}
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+
+            if (progressEl) {
+                progressEl.innerText = `${completedCount} / ${HOUSEWORK_ITEMS.length}`;
             }
-        };
+        }
 
-        let isIndoToChinese = true;
-        window.toggleTranslationDirection = function() {
-            isIndoToChinese = !isIndoToChinese;
-            const dirBtnText = document.getElementById('transDirText');
-            const inputArea = document.getElementById('transInput');
-            const inputLabel = document.getElementById('transInputLabel');
-            
-            if (isIndoToChinese) {
-                dirBtnText.innerText = '印 ➔ 中 (Indo ➔ 中文)';
-                inputLabel.innerText = '輸入印尼文 (可夾雜英文)：';
-                inputArea.placeholder = 'Tulis teks di sini... ( boleh mix English / 中文 )';
-            } else {
-                dirBtnText.innerText = '中 ➔ 印 (中文 ➔ Indo)';
-                inputLabel.innerText = '輸入中文 (可夾雜英文)：';
-                inputArea.placeholder = '在此輸入中文... (可夾雜英文 / Cantonese)';
+        async function toggleHouseworkItem(itemId) {
+            const dateInput = document.getElementById('checklistDate');
+            const selectedDate = (dateInput && dateInput.value) || new Date().toISOString().split('T')[0];
+
+            if (!window.cloudChecklistData[selectedDate]) {
+                window.cloudChecklistData[selectedDate] = {};
             }
-            document.getElementById('transOutputBox').classList.add('hidden');
-            document.getElementById('transResult').innerText = '';
-        };
 
-        window.useQuickPhrase = function(zhText, indoText) {
-            const inputArea = document.getElementById('transInput');
-            const resultBox = document.getElementById('transOutputBox');
-            const resultEl = document.getElementById('transResult');
+            const currentEntry = window.cloudChecklistData[selectedDate][itemId];
+            const nextDone = !(currentEntry && currentEntry.done);
+            const payload = { done: nextDone };
 
-            if (isIndoToChinese) {
-                inputArea.value = indoText;
-                resultEl.innerText = zhText;
-            } else {
-                inputArea.value = zhText;
-                resultEl.innerText = indoText;
-            }
-            resultBox.classList.remove('hidden');
-        };
+            window.cloudChecklistData[selectedDate][itemId] = payload;
+            saveLocalChecklist(window.cloudChecklistData);
+            renderHouseworkChecklist();
 
-        // 🌟 使用免 API Key 嘅 MyMemory 翻譯 API，直接開箱即用！
-        window.translateText = async function() {
-            const input = document.getElementById('transInput').value.trim();
-            if (!input) return;
-
-            const btn = document.getElementById('translateBtn');
-            const resultBox = document.getElementById('transOutputBox');
-            const resultEl = document.getElementById('transResult');
-
-            btn.disabled = true;
-            btn.classList.add('opacity-75');
-            resultBox.classList.remove('hidden');
-            resultEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i> 翻譯中... / Menerjemahkan...';
-
-            const langPair = isIndoToChinese ? 'id|zh-TW' : 'zh-TW|id';
-            const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=${langPair}`;
-
-            try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                
-                if (data && data.responseData && data.responseData.translatedText) {
-                    resultEl.innerText = data.responseData.translatedText.trim();
-                } else {
-                    resultEl.innerText = '翻譯失敗，請重試 / Gagal menerjemahkan.';
+            if (!window.isUsingLocalStorage && window.firebaseBridge) {
+                try {
+                    await window.firebaseBridge.setChecklist(selectedDate, itemId, payload);
+                } catch (err) {
+                    console.error("Failed to sync housework checklist:", err);
                 }
-            } catch (err) {
-                resultEl.innerText = '連線失敗或回應超時 / Error koneksi';
-            } finally {
-                btn.disabled = false;
-                btn.classList.remove('opacity-75');
             }
-        };
+        }
 
-        window.copyTranslation = function() {
-            const translated = document.getElementById('transResult').innerText.trim();
-            if (!translated || translated.includes('翻譯')) return;
+        // ==========================================
+        // TAB 3: Baby Care Rules Logic
+        // ==========================================
+        let currentRulesLang = 'indo-zh';
 
-            const tempInput = document.createElement('textarea');
-            tempInput.value = translated;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
+        const CARE_RULES_DATA = [
+            {
+                num: 1,
+                indo: "Merawat bayi adalah yang paling penting, pekerjaan rumah lainnya adalah nomor dua. Jika hari itu ada pekerjaan rumah yang belum selesai karena merawat bayi, wajib lapor kepada Tuan atau Nyonya pada malam harinya.",
+                zh: "照顧BB是最重要的，其他家務次要。假如你當天因照顧BB而有未完成的家務，當晚要主動告知先生或太太。",
+                en: "Taking care of the baby is the top priority; other housework comes second. If you cannot finish any housework on a given day because you are taking care of the baby, you must proactively inform Sir or Madam that evening."
+            },
+            {
+                num: 2,
+                indo: "Hanya boleh mengerjakan pekerjaan rumah saat bayi sudah tidur. Jika bayi menangis, harus segera melihat bayi. Saat mengerjakan pekerjaan rumah, harus keluar melihat bayi setiap 3-5 menit, pastikan bayi baik-baik saja dan tetap tidur baru lanjut kerja. Tidak boleh berada terlalu lama di dapur dan toilet.",
+                zh: "只有在BB睡着了，才能去做其他家務。如果BB哭，要即時去看BB。在做其他家務時，要隔3-5分鐘就出來看看BB，BB没有事继续睡才能繼續做家務。不能長時間在廚房和廁所。",
+                en: "You may only do other housework when the baby is asleep. If the baby cries, check on the baby immediately. While doing housework, come out every 3–5 minutes to check on the baby, and only continue housework if the baby is safe and still sleeping. Do not stay in the kitchen or bathroom for long periods."
+            },
+            {
+                num: 3,
+                indo: "Dilarang mencium bayi dan menyentuh wajah bayi. Jika tangan bayi menyentuh mulut kamu, segera lap tangan bayi dengan air hangat.",
+                zh: "不能親吻BB和摸BB的脸，如果BB的手打到你的嘴，要用溫水幫他擦手。",
+                en: "Do not kiss the baby or touch the baby's face. If the baby's hand touches your mouth, wipe the baby's hand with warm water immediately."
+            },
+            {
+                num: 4,
+                indo: "Keselamatan dan kebersihan bayi paling utama. Jangan meninggalkan bayi sendirian di meja ganti popok. Di sekitar bayi tidak boleh ada air panas, setrika, benda tajam, dll. Di tempat tidur bayi tidak boleh ada barang apapun seperti selimut tebal, mainan, dll.",
+                zh: "BB安全和衛生最重要，不要獨留BB在換片台，BB周圍不能有熱水，熨斗，尖銳的東西等。BB床上不能有任何雜物，例如被子，玩具等。",
+                en: "The baby's safety and hygiene are paramount. Never leave the baby alone on the changing table. Keep hot water, irons, sharp objects, etc. away from the baby. Keep the baby's crib completely clear of loose items such as blankets, toys, etc."
+            },
+            {
+                num: 5,
+                indo: "Harus lembut saat merawat bayi, meskipun bayi rewel atau menangis tidak boleh bersikap kasar. Saat meletakkan bayi di meja ganti popok atau tempat tidur, harus diletakkan dengan perlahan.",
+                zh: "對待BB時必須溫柔，即使BB吵鬧也不能粗魯對待。把BB放置在換片台或床時，必須輕放。",
+                en: "You must always treat the baby gently; never be rough even if the baby is fussy or crying. Place the baby down gently onto the changing table or crib."
+            },
+            {
+                num: 6,
+                indo: "Tidak boleh membawa bayi masuk ke toilet dan dapur, hanya boleh di ruang tamu.",
+                zh: "不能带BB進廁所和廚房，只能在廳里。",
+                en: "Do not bring the baby into the bathroom or kitchen; the baby must stay in the living room area."
+            },
+            {
+                num: 7,
+                indo: "Jika botol susu jatuh ke lantai, buang semua susunya dan buat yang baru. Jika dot menyentuh benda lain, ganti dengan dot yang baru. Gunakan 1 sapu tangan kasa baru setiap kali menyusui; jika jatuh ke lantai tidak boleh dipakai lagi dan harus dicuci dulu. Jika ada barang apapun jatuh ke lantai, amankan bayi terlebih dahulu baru pungut barangnya, dan dilarang mengambil barang menggunakan kaki.",
+                zh: "奶瓶如果掉下地，要整一支奶都倒掉，重新沖新的。奶嘴如果碰到其他東西，要換新的奶嘴。每餵一次奶用一條新的紗巾。紗巾如果掉在地上，不能重用，必須清洗後才能重用。無論任何物品掉在地上，都應該先在安頓好BB後才檢起物品，而且禁止用腳夾起物件。",
+                en: "If a milk bottle drops on the floor, discard all the milk and prepare a fresh bottle. If a nipple touches anything else, replace it with a clean nipple. Use a fresh burp cloth for every feeding; if a cloth drops on the floor, it must be washed before reuse. If anything drops on the floor, ensure the baby is safely settled first before picking it up, and never pick up objects using your feet."
+            },
+            {
+                num: 8,
+                indo: "Bayi biasanya minum susu setiap 3-4 jam sekali, tetapi jika bayi lapar lebih awal, kamu juga harus memberinya susu lebih awal.",
+                zh: "BB一般3-4小时饮一次奶，但是如果BB提前肚饿，你也要提早喂他。",
+                en: "The baby usually feeds every 3–4 hours, but if the baby gets hungry earlier, you must feed the baby earlier."
+            },
+            {
+                num: 9,
+                indo: "Susu - setelah diminum bayi, jika masih bersisa setelah 1 jam harus langsung dibuang.",
+                zh: "奶 - BB飲過以後1小時就要倒掉。",
+                en: "Milk – any leftover milk must be discarded 1 hour after the baby starts drinking from it."
+            },
+            {
+                num: 10,
+                indo: "Setiap kali selesai, catat kondisi minum susu, kencing, dan pup (BAB). Setelah mencatat, periksa kembali agar tidak ada kesalahan catatan.",
+                zh: "每次紀錄好飲奶，小便和大便的情況。每次紀錄完都要檢查清楚有沒有紀錄錯誤。",
+                en: "Record every feeding, urination, and bowel movement accurately. Double-check every entry after recording to ensure there are no mistakes."
+            },
+            {
+                num: 11,
+                indo: "Saat kami tidak di rumah, kamu hanya boleh mencuci baju kamu sendiri pada malam hari setelah kami pulang.",
+                zh: "我們不在家時，你洗自己的衣服只能在晚上我們回來以後再洗。",
+                en: "While we are away from home, you may only wash your own clothes at night after we return."
+            },
+            {
+                num: 12,
+                indo: "Setiap malam siapkan makan siang Nyonya dan kamu untuk besok. Boleh masak daging dan nasi dulu, sedangkan sayur harus dimasak pagi harinya. Setelah Nyonya mulai bekerja di bulan Desember, kamu harus bangun jam 5:30 pagi.",
+                zh: "每天晚上準備太太和你自己明天的午餐。可以先煮肉和飯。蔬菜要當天早上煮。太太12月開始上班後，你需要五點半起床。",
+                en: "Prepare tomorrow's lunch for Madam and yourself every evening. You may cook the meat and rice the night before, while vegetables must be cooked fresh the next morning. Once Madam returns to work in December, you will need to wake up at 5:30 AM."
+            },
+            {
+                num: 13,
+                indo: "Sore hari saat bayi tidur, kamu boleh menyiapkan bahan masakan terlebih dahulu, tetapi harus menunggu Tuan atau Nyonya pulang baru mulai memasak.",
+                zh: "下午你可以趁BB睡着的時候先準備食材，但是要等先生或者太太回來後才開始煮。",
+                en: "In the afternoon while the baby is sleeping, you may prep the cooking ingredients in advance, but wait until Sir or Madam returns home before starting to cook."
+            },
+            {
+                num: 14,
+                indo: "Jika ada orang asing mengetuk pintu, jangan buka pintu.",
+                zh: "有陌生人敲門，不要開門。",
+                en: "If a stranger knocks on the door, do not open the door."
+            },
+            {
+                num: 15,
+                indo: "Dalam keadaan apapun, dilarang keluar dari pintu rumah tanpa izin.",
+                zh: "任何情況都不可以擅自走出家門。",
+                en: "Under no circumstances may you leave the house without permission."
+            },
+            {
+                num: 16,
+                indo: "Jika ada keadaan darurat, misalnya bayi tidak enak badan, segera telepon Tuan atau Nyonya.",
+                zh: "有緊急事情, 例如BB不舒服，要立即打給先生或者太太。",
+                en: "In case of any emergency, such as the baby feeling unwell, call Sir or Madam immediately."
+            },
+            {
+                num: 17,
+                indo: "Pada siang hari tidak boleh bermain HP pribadi. Jika perlu menghubungi Tuan dan Nyonya, silakan gunakan HP rumah yang sudah disediakan.",
+                zh: "日間時間不能玩私人手機，如需要聯繫先生和太太，請使用家中安排的手機。",
+                en: "Do not use your personal mobile phone during daytime hours. If you need to contact Sir or Madam, please use the house phone provided."
+            }
+        ];
 
-            const resultEl = document.getElementById('transResult');
-            const oldText = resultEl.innerText;
-            resultEl.innerText = '✅ 已複製！ / Sudah disalin!';
-            setTimeout(() => { resultEl.innerText = oldText; }, 1200);
-        };
+        function setRulesLanguage(langMode) {
+            currentRulesLang = langMode;
+            const btnZh = document.getElementById('btnLangIndoZh');
+            const btnEn = document.getElementById('btnLangIndoEn');
 
-        window.setCurrentTimes = function() {
+            if (langMode === 'indo-zh') {
+                btnZh.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500 text-white shadow-sm transition leading-tight text-center';
+                btnEn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-800 transition leading-tight text-center';
+            } else {
+                btnEn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500 text-white shadow-sm transition leading-tight text-center';
+                btnZh.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-800 transition leading-tight text-center';
+            }
+            renderCareRules();
+        }
+
+        function renderCareRules() {
+            const container = document.getElementById('careRulesContainer');
+            if (!container) return;
+
+            container.innerHTML = '';
+            CARE_RULES_DATA.forEach(rule => {
+                const secondText = currentRulesLang === 'indo-zh' ? rule.zh : rule.en;
+                const card = document.createElement('div');
+                card.className = 'bg-rose-50/40 border border-rose-100 rounded-xl p-3.5 space-y-2';
+                card.innerHTML = `
+                    <div class="flex items-start gap-2.5">
+                        <span class="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
+                            ${rule.num}
+                        </span>
+                        <div class="space-y-1.5 flex-1">
+                            <p class="text-sm font-bold text-slate-800 leading-relaxed">${rule.indo}</p>
+                            <p class="text-xs text-slate-600 leading-relaxed border-t border-rose-200/50 pt-1.5">${secondText}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // Modal & Care Log Functions
+        // ==========================================
+        function setCurrentTimes() {
             const now = new Date();
             const timeString = now.toTimeString().substring(0, 5);
             if (document.getElementById('milkTime')) document.getElementById('milkTime').value = timeString;
             if (document.getElementById('diaperTime')) document.getElementById('diaperTime').value = timeString;
             if (document.getElementById('sleepStart')) document.getElementById('sleepStart').value = timeString;
             if (document.getElementById('otherTime')) document.getElementById('otherTime').value = timeString;
-        };
+        }
 
-        window.setMilkAmount = function(val) {
+        function setMilkAmount(val) {
             document.getElementById('milkAmount').value = val;
             document.getElementById('amountDisplay').innerText = val + ' ml';
-        };
+        }
 
-        window.openModal = function(id) {
+        function openModal(id) {
             setCurrentTimes();
             if (id === 'diaperModal') {
                 toggleDiaperUI();
             }
-            document.getElementById(id).classList.remove('hidden');
-        };
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.remove('hidden');
+        }
 
-        // 🌟 切換換片模組 UI (含大便顏色邏輯)
-        window.toggleDiaperUI = function() {
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function showMsg(title, text) {
+            document.getElementById('msgModalTitle').innerText = title;
+            document.getElementById('msgModalText').innerText = text;
+            document.getElementById('messageModal').classList.remove('hidden');
+        }
+
+        function toggleDiaperUI() {
             const selectedType = document.querySelector('input[name="diaperType"]:checked')?.value || '';
             const isBoth = selectedType.includes('兩樣都有');
             const isPoopOnly = selectedType.includes('大便');
@@ -1029,9 +1245,30 @@
             } else {
                 colorSection.classList.add('hidden');
             }
-        };
+        }
 
-        window.saveMilkLog = async function(e) {
+        async function saveLogItem(item) {
+            if (window.isUsingLocalStorage || !window.firebaseBridge) {
+                const localItem = { dbKey: 'local_' + Date.now(), ...item };
+                window.allCloudLogs.push(localItem);
+                saveLocalLogs(window.allCloudLogs);
+                renderLogs();
+                return;
+            }
+
+            try {
+                await window.firebaseBridge.pushLog(item);
+            } catch (err) {
+                console.error("Error saving log:", err);
+                const localItem = { dbKey: 'local_' + Date.now(), ...item };
+                window.allCloudLogs.push(localItem);
+                saveLocalLogs(window.allCloudLogs);
+                renderLogs();
+                showMsg('連線提示', '無法儲存至雲端，已為您儲存在本地紀錄！');
+            }
+        }
+
+        async function saveMilkLog(e) {
             e.preventDefault();
             const time = document.getElementById('milkTime').value;
             const milkType = document.querySelector('input[name="milkType"]:checked').value;
@@ -1051,12 +1288,12 @@
                 colorClass: 'bg-amber-100 text-amber-700 border-amber-300'
             };
 
-            await saveLogToCloud(item);
+            await saveLogItem(item);
             document.getElementById('milkNote').value = '';
             closeModal('milkModal');
-        };
+        }
 
-        window.saveDiaperLog = async function(e) {
+        async function saveDiaperLog(e) {
             e.preventDefault();
             const time = document.getElementById('diaperTime').value;
             const type = document.querySelector('input[name="diaperType"]:checked').value;
@@ -1092,12 +1329,12 @@
                 colorClass: 'bg-sky-100 text-sky-700 border-sky-300'
             };
 
-            await saveLogToCloud(item);
+            await saveLogItem(item);
             document.getElementById('diaperNote').value = '';
             closeModal('diaperModal');
-        };
+        }
 
-        window.saveSleepLog = async function(e) {
+        async function saveSleepLog(e) {
             e.preventDefault();
             const start = document.getElementById('sleepStart').value;
             const end = document.getElementById('sleepEnd').value;
@@ -1118,12 +1355,12 @@
                 colorClass: 'bg-indigo-100 text-indigo-700 border-indigo-300'
             };
 
-            await saveLogToCloud(item);
+            await saveLogItem(item);
             document.getElementById('sleepNote').value = '';
             closeModal('sleepModal');
-        };
+        }
 
-        window.saveOtherLog = async function(e) {
+        async function saveOtherLog(e) {
             e.preventDefault();
             const time = document.getElementById('otherTime').value;
             const category = document.getElementById('otherCategory').value;
@@ -1141,39 +1378,27 @@
                 colorClass: 'bg-emerald-100 text-emerald-700 border-emerald-300'
             };
 
-            await saveLogToCloud(item);
+            await saveLogItem(item);
             document.getElementById('otherNote').value = '';
             closeModal('otherModal');
-        };
+        }
 
-        window.closeModal = function(id) {
-            const modal = document.getElementById(id);
-            if (modal) modal.classList.add('hidden');
-        };
-
-        window.showMsg = function(title, text) {
-            document.getElementById('msgModalTitle').innerText = title;
-            document.getElementById('msgModalText').innerText = text;
-            document.getElementById('messageModal').classList.remove('hidden');
-        };
-
-        window.deleteLog = async function(dbKey) {
-            if (isUsingLocalStorage || !dbKey || dbKey.startsWith('local_')) {
-                allCloudLogs = allCloudLogs.filter(l => l.dbKey !== dbKey);
-                saveLocalLogs(allCloudLogs);
+        async function deleteLog(dbKey) {
+            if (window.isUsingLocalStorage || !dbKey || dbKey.startsWith('local_') || !window.firebaseBridge) {
+                window.allCloudLogs = window.allCloudLogs.filter(l => l.dbKey !== dbKey);
+                saveLocalLogs(window.allCloudLogs);
                 renderLogs();
                 return;
             }
 
             try {
-                const itemRef = ref(db, `baby_logs/${dbKey}`);
-                await remove(itemRef);
+                await window.firebaseBridge.removeLog(dbKey);
             } catch (err) {
                 console.error("Error deleting log:", err);
             }
-        };
+        }
 
-        window.confirmClearDayLogs = function() {
+        function confirmClearDayLogs() {
             const selectedDate = document.getElementById('logDate').value;
             document.getElementById('confirmTitle').innerText = "清空當日紀錄 | Hapus Data Hari Ini";
             document.getElementById('confirmText').innerText = `確定要刪除 ${selectedDate} 的所有紀錄嗎？\nYakin ingin menghapus semua catatan pada tanggal ini?`;
@@ -1181,30 +1406,29 @@
             const yesBtn = document.getElementById('confirmYesBtn');
             yesBtn.onclick = async function() {
                 closeModal('confirmModal');
-                const logsToDelete = allCloudLogs.filter(l => l.date === selectedDate);
+                const logsToDelete = window.allCloudLogs.filter(l => l.date === selectedDate);
                 
-                if (isUsingLocalStorage) {
-                    allCloudLogs = allCloudLogs.filter(l => l.date !== selectedDate);
-                    saveLocalLogs(allCloudLogs);
+                if (window.isUsingLocalStorage || !window.firebaseBridge) {
+                    window.allCloudLogs = window.allCloudLogs.filter(l => l.date !== selectedDate);
+                    saveLocalLogs(window.allCloudLogs);
                     renderLogs();
                     return;
                 }
 
                 for (let l of logsToDelete) {
                     if (l.dbKey) {
-                        const itemRef = ref(db, `baby_logs/${l.dbKey}`);
-                        await remove(itemRef);
+                        await window.firebaseBridge.removeLog(l.dbKey);
                     }
                 }
             };
             document.getElementById('confirmModal').classList.remove('hidden');
-        };
+        }
 
-        window.renderLogs = function() {
+        function renderLogs() {
             const logDateInput = document.getElementById('logDate');
             if (!logDateInput) return;
             const selectedDate = logDateInput.value;
-            const dayLogs = allCloudLogs.filter(l => l.date === selectedDate);
+            const dayLogs = window.allCloudLogs.filter(l => l.date === selectedDate);
             dayLogs.sort((a, b) => (b.time || "").localeCompare(a.time || ""));
 
             const logContainer = document.getElementById('logList');
@@ -1242,7 +1466,7 @@
                             <div class="text-sm text-slate-700 font-medium mt-1">${log.details || ''}</div>
                             ${log.note ? `<div class="text-xs text-slate-500 mt-1 bg-amber-50/60 px-2 py-1 rounded-lg border border-amber-100 inline-block"><i class="fa-regular fa-comment-dots mr-1"></i>${log.note}</div>` : ''}
                         </div>
-                        <button onclick="deleteLog('${log.dbKey}')" class="absolute top-3 right-3 text-slate-300 hover:text-rose-500 p-1 text-sm transition">
+                        <button type="button" onclick="deleteLog('${log.dbKey}')" class="absolute top-3 right-3 text-slate-300 hover:text-rose-500 p-1 text-sm transition">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     `;
@@ -1252,11 +1476,11 @@
 
             document.getElementById('totalMilk').innerText = totalMilk;
             document.getElementById('totalDiaper').innerText = totalDiaper;
-        };
+        }
 
-        window.generateSummary = function() {
+        function generateSummary() {
             const selectedDate = document.getElementById('logDate').value;
-            const dayLogs = allCloudLogs.filter(l => l.date === selectedDate);
+            const dayLogs = window.allCloudLogs.filter(l => l.date === selectedDate);
             dayLogs.sort((a, b) => (b.time || "").localeCompare(a.time || ""));
             
             document.getElementById('summaryCardDate').innerText = selectedDate;
@@ -1291,9 +1515,9 @@
             document.getElementById('summaryTotalDiaper').innerText = totalDiaper + ' 次';
 
             openModal('summaryModal');
-        };
+        }
 
-        window.exportSummaryImage = function() {
+        function exportSummaryImage() {
             const card = document.getElementById('summaryExportCard');
             const downloadBtn = document.getElementById('downloadBtn');
             const originalText = downloadBtn.innerHTML;
@@ -1336,7 +1560,106 @@
                 downloadBtn.disabled = false;
                 downloadBtn.innerHTML = originalText;
             });
+        }
+
+        // Setup Auth Form & Initial Render
+        function handleAuthSubmit(e) {
+            if (e) e.preventDefault();
+            const input = document.getElementById('passcodeInput');
+            const errorMsg = document.getElementById('authErrorMsg');
+            const authCard = document.getElementById('authCard');
+
+            if (input && input.value.trim() === CORRECT_PASSCODE) {
+                sessionStorage.setItem('baby_tracker_authenticated', 'true');
+                unlockApp();
+            } else {
+                if (errorMsg) errorMsg.classList.remove('hidden');
+                if (authCard) {
+                    authCard.classList.remove('animate-shake');
+                    void authCard.offsetWidth;
+                    authCard.classList.add('animate-shake');
+                }
+                if (input) {
+                    input.value = '';
+                    input.focus();
+                }
+            }
+            return false;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (sessionStorage.getItem('baby_tracker_authenticated') === 'true') {
+                unlockApp();
+            }
+        });
+    </script>
+
+    <!-- Firebase Realtime Database Module (Connects Cloud Sync when available) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, push, remove, onValue, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAfGu86QjIRvtCwI86c6fEBk-y2vjIy2mw",
+            authDomain: "baby-tracker-199b2.firebaseapp.com",
+            databaseURL: "https://baby-tracker-199b2-default-rtdb.firebaseio.com",
+            projectId: "baby-tracker-199b2",
+            storageBucket: "baby-tracker-199b2.firebasestorage.app",
+            messagingSenderId: "1042532845387",
+            appId: "1:1042532845387:web:bd69e03f4c783d57b24ace"
         };
+
+        let hasLoadedFromCloud = false;
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getDatabase(app);
+
+            window.firebaseBridge = {
+                pushLog: (item) => push(ref(db, 'baby_logs'), item),
+                removeLog: (dbKey) => remove(ref(db, `baby_logs/${dbKey}`)),
+                setChecklist: (date, itemId, payload) => set(ref(db, `housework_checklist/${date}/${itemId}`), payload)
+            };
+
+            setTimeout(() => {
+                if (!hasLoadedFromCloud) {
+                    window.isUsingLocalStorage = true;
+                    window.updateStatusUI('local');
+                }
+            }, 6000);
+
+            // Listen to baby care logs
+            onValue(ref(db, 'baby_logs'), (snapshot) => {
+                hasLoadedFromCloud = true;
+                const logs = [];
+                const data = snapshot.val();
+                if (data) {
+                    Object.keys(data).forEach((key) => {
+                        logs.push({ dbKey: key, ...data[key] });
+                    });
+                }
+                window.allCloudLogs = logs;
+                window.isUsingLocalStorage = false;
+                window.updateStatusUI('online');
+                renderLogs();
+            }, (error) => {
+                console.error("Database read error:", error);
+                window.isUsingLocalStorage = true;
+                window.updateStatusUI('error');
+            });
+
+            // Listen to daily housework checklist
+            onValue(ref(db, 'housework_checklist'), (snapshot) => {
+                window.cloudChecklistData = snapshot.val() || {};
+                renderHouseworkChecklist();
+            }, (error) => {
+                console.error("Checklist read error:", error);
+            });
+        } catch (e) {
+            console.error("Firebase init error:", e);
+            window.isUsingLocalStorage = true;
+            window.updateStatusUI('local');
+        }
     </script>
 </body>
 </html>
