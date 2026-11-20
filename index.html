@@ -1030,12 +1030,21 @@
             saveLocalChecklist(window.cloudChecklistData);
             renderHouseworkChecklist();
 
-            if (!window.isUsingLocalStorage && window.firebaseBridge) {
-                try {
-                    await window.firebaseBridge.setChecklist(selectedDate, itemId, payload);
-                } catch (err) {
-                    console.error("Failed to sync housework checklist:", err);
+            const syncToCloud = async () => {
+                if (window.firebaseBridge) {
+                    try {
+                        await window.firebaseBridge.setChecklist(selectedDate, itemId, payload);
+                    } catch (err) {
+                        console.error("Failed to sync housework checklist:", err);
+                        showMsg('連線提示', '無法將家務進度同步至雲端，請檢查網絡連線。');
+                    }
                 }
+            };
+
+            if (window.firebaseBridge) {
+                await syncToCloud();
+            } else {
+                setTimeout(syncToCloud, 500);
             }
         }
 
@@ -1612,6 +1621,7 @@
         };
 
         let hasLoadedFromCloud = false;
+        let useFallbackChecklistPath = false;
 
         try {
             const app = initializeApp(firebaseConfig);
@@ -1620,7 +1630,17 @@
             window.firebaseBridge = {
                 pushLog: (item) => push(ref(db, 'baby_logs'), item),
                 removeLog: (dbKey) => remove(ref(db, `baby_logs/${dbKey}`)),
-                setChecklist: (date, itemId, payload) => set(ref(db, `housework_checklist/${date}/${itemId}`), payload)
+                setChecklist: async (date, itemId, payload) => {
+                    if (useFallbackChecklistPath) {
+                        return set(ref(db, `baby_logs/_housework_checklist/${date}/${itemId}`), payload);
+                    }
+                    try {
+                        return await set(ref(db, `housework_checklist/${date}/${itemId}`), payload);
+                    } catch (err) {
+                        useFallbackChecklistPath = true;
+                        return await set(ref(db, `baby_logs/_housework_checklist/${date}/${itemId}`), payload);
+                    }
+                }
             };
 
             setTimeout(() => {
@@ -1637,6 +1657,7 @@
                 const data = snapshot.val();
                 if (data) {
                     Object.keys(data).forEach((key) => {
+                        if (key === '_housework_checklist') return;
                         logs.push({ dbKey: key, ...data[key] });
                     });
                 }
@@ -1650,12 +1671,26 @@
                 window.updateStatusUI('error');
             });
 
-            // Listen to daily housework checklist
+            // Listen to daily housework checklist (with automatic fallback if rules only allow baby_logs)
             onValue(ref(db, 'housework_checklist'), (snapshot) => {
+                if (useFallbackChecklistPath) return;
+                hasLoadedFromCloud = true;
+                window.isUsingLocalStorage = false;
+                window.updateStatusUI('online');
                 window.cloudChecklistData = snapshot.val() || {};
+                saveLocalChecklist(window.cloudChecklistData);
                 renderHouseworkChecklist();
             }, (error) => {
-                console.error("Checklist read error:", error);
+                console.warn("Switching checklist sync path to baby_logs/_housework_checklist:", error);
+                useFallbackChecklistPath = true;
+                onValue(ref(db, 'baby_logs/_housework_checklist'), (fallbackSnap) => {
+                    hasLoadedFromCloud = true;
+                    window.isUsingLocalStorage = false;
+                    window.updateStatusUI('online');
+                    window.cloudChecklistData = fallbackSnap.val() || {};
+                    saveLocalChecklist(window.cloudChecklistData);
+                    renderHouseworkChecklist();
+                });
             });
         } catch (e) {
             console.error("Firebase init error:", e);
